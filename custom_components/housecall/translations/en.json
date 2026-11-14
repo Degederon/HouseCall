@@ -1,0 +1,100 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HouseCall",
+        "description": "One place for every alert in the house. I found these people and their phones:\n\n{found}\n\nPress Submit to finish. You can change people, quiet hours, speakers and the Glass Board later under Configure."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "HouseCall is already set up. Use Configure to change it."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HouseCall settings",
+        "menu_options": {
+          "people": "People and their phones",
+          "quiet": "Quiet hours",
+          "outputs": "Speakers, Glass Message Board and repeats"
+        }
+      },
+      "people": {
+        "title": "People and their phones",
+        "description": "Pick the phone(s) for each person. Messages are sent to people, and the Hub uses these phones."
+      },
+      "quiet": {
+        "title": "Quiet hours",
+        "description": "During quiet hours, Normal messages wait until morning (they still show on the board). Critical alerts always come through.",
+        "data": {
+          "quiet_start": "Quiet from",
+          "quiet_end": "Quiet until"
+        }
+      },
+      "outputs": {
+        "title": "Speakers, Glass Message Board and repeats",
+        "description": "Critical alerts are read aloud on the speakers and repeat until someone taps \"I'm on it\". Messages also appear on Glass Message Board as notes tinted by urgency (blue, amber, rose), without a second phone notification.",
+        "data": {
+          "speakers": "Speakers that read critical alerts aloud",
+          "tts_entity": "Voice (text-to-speech)",
+          "board_service": "Also send to this action (optional, advanced)",
+          "repeat_minutes": "Repeat critical alerts every",
+          "max_repeats": "Stop repeating after this many times",
+          "glass_board": "Also post to Glass Message Board (if installed)"
+        }
+      }
+    }
+  },
+  "services": {
+    "send": {
+      "name": "Send",
+      "description": "Send a message to people. The Hub picks phones, board and speakers based on urgency and quiet hours.",
+      "fields": {
+        "message": {
+          "name": "Message",
+          "description": "What to say."
+        },
+        "title": {
+          "name": "Title",
+          "description": "Optional title on phone notifications."
+        },
+        "to": {
+          "name": "To",
+          "description": "People to notify. Leave empty for everyone."
+        },
+        "priority": {
+          "name": "How urgent",
+          "description": "Info = board only. Normal = phones + board (waits during quiet hours). Critical = loud, speakers, repeats until acknowledged."
+        }
+      }
+    },
+    "acknowledge": {
+      "name": "Acknowledge",
+      "description": "Mark a critical alert as handled and stop the repeats.",
+      "fields": {
+        "id": {
+          "name": "Message ID",
+          "description": "The id of the message."
+        },
+        "by": {
+          "name": "By",
+          "description": "Who is handling it."
+        }
+      }
+    },
+    "clear_history": {
+      "name": "Clear history",
+      "description": "Remove all messages from the Hub."
+    }
+  },
+  "selector": {
+    "priority": {
+      "options": {
+        "info": "Info",
+        "normal": "Normal",
+        "critical": "Critical"
+      }
+    }
+  }
+}

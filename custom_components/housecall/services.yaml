@@ -1,0 +1,39 @@
+send:
+  fields:
+    message:
+      required: true
+      example: "Water under the kitchen sink!"
+      selector:
+        text:
+    title:
+      required: false
+      selector:
+        text:
+    to:
+      required: false
+      example: "everyone"
+      selector:
+        entity:
+          domain: person
+          multiple: true
+    priority:
+      required: false
+      default: normal
+      selector:
+        select:
+          translation_key: priority
+          options:
+            - info
+            - normal
+            - critical
+acknowledge:
+  fields:
+    id:
+      required: true
+      selector:
+        text:
+    by:
+      required: false
+      selector:
+        text:
+clear_history:
