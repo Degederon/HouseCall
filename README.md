@@ -8,7 +8,7 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.11%2B-18BCF2.svg?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
-[![Version](https://img.shields.io/badge/version-1.1.1-6E56CF.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.0-6E56CF.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
@@ -41,7 +41,7 @@ HouseCall makes notifications in Home Assistant simple. You send a message to **
 | **People, not devices** | Send to *Me*, *Jay* or *Everyone*. HouseCall finds each person's phone from the Companion app automatically. Hide accounts you don't want, or add HouseCall-only people such as Grandma. |
 | **Three levels of urgency** | **Info** shows on the board only. **Normal** goes to phones and the board. **Critical** is loud, breaks through silent mode, and repeats until someone answers. |
 | **Quiet hours** | Normal messages wait until morning and still show on the board. Critical alerts always come through. |
-| **"I'm on it"** | One tap on a phone or the card stops the repeats, clears the alert from everyone's phone, and tells the others who's handling it. |
+| **"I'm on it"** | One tap on a phone or the card stops the repeats, clears the alert from everyone's phone, and tells the others who's handling it. Tapping the notification itself opens your HouseCall dashboard, right next to the button. |
 | **Speakers** | Critical alerts are read aloud on the speakers you choose. |
 | **Glass Message Board** | Every message also appears as a note on your board, tinted by urgency (blue, amber, rose). Critical notes are pinned. The board doesn't send a second phone notification. |
 | **Where it will go** | Before you press Send, the card tells you in plain words who will get the message and how. |
@@ -132,7 +132,7 @@ To confirm it's working, open **Developer tools → States** and look for `senso
    | **People from Home Assistant: show or hide** | Who appears in HouseCall, and their phone(s). See [Adding and removing people](#adding-and-removing-people). |
    | **Add / change a HouseCall-only person** | People who aren't in Home Assistant, such as Grandma or the babysitter. |
    | **Quiet hours** | When Normal messages wait until morning. Default: 10 PM to 7 AM. |
-   | **Speakers, Glass Message Board and repeats** | Speakers and a voice for critical alerts, whether to post to Glass Message Board, how often critical alerts repeat (default every 5 minutes) and when to stop (default after 6 times). |
+   | **Phones, speakers, Glass Message Board and repeats** | Which dashboard opens when someone taps a notification, speakers and a voice for critical alerts, whether to post to Glass Message Board, how often critical alerts repeat (default every 5 minutes) and when to stop (default after 6 times). |
 
 3. Select **Submit**.
 
@@ -370,11 +370,12 @@ Your browser hasn't loaded the card's file.
 | A person shows **0 phones** | The Companion app's tracker isn't linked to that person. Pick the phone under **Configure → People from Home Assistant: show or hide**, or add the phone's tracker to the person under **Settings → People**. |
 | Critical alerts aren't loud on iPhone | Allow **Critical Alerts** for the Home Assistant app in iPhone **Settings → Notifications → Home Assistant**. |
 | Critical alerts aren't loud on Android | In the Companion app, open **Settings → Companion app → Notification channels → alarm_stream** and allow sound. |
-| Speakers don't read alerts | Pick both a speaker and a voice under **Configure → Speakers, Glass Message Board and repeats**. |
+| Speakers don't read alerts | Pick both a speaker and a voice under **Configure → Phones, speakers, Glass Message Board and repeats**. |
 | A Normal message didn't reach my phone | Quiet hours are on. It shows on the board now and reaches phones when quiet hours end. |
 | Messages don't appear on Glass Message Board | Check Glass Message Board is installed and set up, and **Also post to Glass Message Board** is on under **Configure**. |
 | **I'm on it** doesn't respond on the card | Update to 1.1.1 or later, restart Home Assistant and hard-refresh the browser (**Ctrl + Shift + R**, or **Reset frontend cache** in the companion app). The button now changes to *Letting everyone know…* as soon as you tap it. |
-| I can't find **I'm on it** on my phone | The button is part of the notification, but it's hidden at first. On iPhone, **press and hold** the notification (or swipe it left and choose **View**). On Android, **swipe down** on the notification to expand it. |
+| I can't find **I'm on it** on my phone | The button is part of the notification, but it's hidden at first. On iPhone, **press and hold** the notification (or pull a banner down, or swipe it left and choose **View**). On Android, **swipe down** on the notification to expand it. A plain tap opens your HouseCall dashboard instead, where the button is on the card. |
+| Tapping a notification opens the wrong page | Choose the dashboard under **Configure → Phones, speakers, Glass Message Board and repeats → Dashboard to open when someone taps a notification**. If you named the starter dashboard **HouseCall**, it's picked automatically. |
 | A critical alert says **Nobody answered** | It reached the number of repeats you set, or Home Assistant restarted while it was waiting. |
 | The card looks like the old version after an update | Restart Home Assistant, then hard-refresh the browser or reset the companion app's frontend cache. |
 

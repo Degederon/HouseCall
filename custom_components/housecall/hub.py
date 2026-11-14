@@ -21,6 +21,7 @@ from .const import (
     CONF_CUSTOM_PEOPLE,
     CONF_GLASS_BOARD,
     CONF_MAX_REPEATS,
+    CONF_OPEN_DASHBOARD,
     CONF_PEOPLE,
     CONF_QUIET_END,
     CONF_QUIET_START,
@@ -39,6 +40,7 @@ from .const import (
     PRIORITY_INFO,
     PRIORITY_NORMAL,
     SIGNAL_UPDATE,
+    STARTER_DASHBOARD,
     STATUS_ACKED,
     STATUS_EXPIRED,
     STATUS_HELD,
@@ -54,6 +56,27 @@ _LOGGER = logging.getLogger(__name__)
 def notify_services(hass: HomeAssistant) -> list[str]:
     """All legacy notify services, e.g. ['mobile_app_my_iphone', 'notify']."""
     return sorted(hass.services.async_services().get("notify", {}).keys())
+
+
+def list_dashboards(hass: HomeAssistant) -> list[str]:
+    """URL paths of the dashboards, e.g. ['dashboard-housecall'] (best effort)."""
+    try:
+        data = hass.data.get("lovelace")
+        dashboards = getattr(data, "dashboards", None)
+        if dashboards is None and isinstance(data, dict):
+            dashboards = data.get("dashboards")
+        return sorted(p for p in (dashboards or {}) if p)
+    except Exception:  # noqa: BLE001 - internal structure may change between versions
+        return []
+
+
+def normalize_path(value: str | None) -> str:
+    v = (value or "").strip()
+    if not v:
+        return ""
+    if v.startswith("http://") or v.startswith("https://"):
+        return v
+    return v if v.startswith("/") else "/" + v
 
 
 def discover_people(hass: HomeAssistant) -> dict[str, list[str]]:
@@ -280,12 +303,23 @@ class HouseCall:
                     out.append(svc)
         return out
 
+    def open_url(self) -> str:
+        """Where a tap on the notification takes you."""
+        if CONF_OPEN_DASHBOARD in self.opts:
+            return normalize_path(self.opts.get(CONF_OPEN_DASHBOARD))
+        # Never set: use the starter dashboard if it exists.
+        return f"/{STARTER_DASHBOARD}" if STARTER_DASHBOARD in list_dashboards(self.hass) else ""
+
     async def _push(self, item: dict[str, Any], critical: bool) -> None:
         title = item.get("title") or ("Critical alert" if critical else "Home")
+        url = self.open_url()
         for svc in self._services_for(item["to"]):
             data: dict[str, Any] = {}
             if svc.startswith("mobile_app_"):
                 data = {"tag": f"housecall_{item['id']}", "group": "housecall"}
+                if url:
+                    data["url"] = url          # iPhone
+                    data["clickAction"] = url  # Android
                 if critical:
                     data.update(
                         {

@@ -19,7 +19,7 @@
           "add_person": "Add a HouseCall-only person",
           "edit_person": "Change or remove a HouseCall-only person",
           "quiet": "Quiet hours",
-          "outputs": "Speakers, Glass Message Board and repeats"
+          "outputs": "Phones, speakers, Glass Message Board and repeats"
         }
       },
       "people": {
@@ -38,7 +38,7 @@
         }
       },
       "outputs": {
-        "title": "Speakers, Glass Message Board and repeats",
+        "title": "Phones, speakers, Glass Message Board and repeats",
         "description": "Critical alerts are read aloud on the speakers and repeat until someone taps \"I'm on it\". Messages also appear on Glass Message Board as notes tinted by urgency (blue, amber, rose), without a second phone notification.",
         "data": {
           "speakers": "Speakers that read critical alerts aloud",
@@ -46,7 +46,11 @@
           "board_service": "Also send to this action (optional, advanced)",
           "repeat_minutes": "Repeat critical alerts every",
           "max_repeats": "Stop repeating after this many times",
-          "glass_board": "Also post to Glass Message Board (if installed)"
+          "glass_board": "Also post to Glass Message Board (if installed)",
+          "open_dashboard": "Dashboard to open when someone taps a notification"
+        },
+        "data_description": {
+          "open_dashboard": "Pick the dashboard with your HouseCall card, so a tap lands right next to the I'm on it button. Leave empty to open the app's home screen. You can also type a path, such as /dashboard-housecall/home."
         }
       },
       "add_person": {

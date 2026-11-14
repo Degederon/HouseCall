@@ -1,7 +1,7 @@
 """Constants for HouseCall."""
 
 DOMAIN = "housecall"
-VERSION = "1.1.1"
+VERSION = "1.2.0"
 
 CONF_MEMBERS = "members"  # options-screen field only
 CONF_PEOPLE = "people"
@@ -13,6 +13,8 @@ CONF_SPEAKERS = "speakers"
 CONF_TTS = "tts_entity"
 CONF_BOARD_SERVICE = "board_service"
 CONF_GLASS_BOARD = "glass_board"
+CONF_OPEN_DASHBOARD = "open_dashboard"  # path opened when a notification is tapped
+STARTER_DASHBOARD = "dashboard-housecall"
 CONF_REPEAT_MINUTES = "repeat_minutes"
 CONF_MAX_REPEATS = "max_repeats"
 

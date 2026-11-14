@@ -29,6 +29,7 @@ from .const import (
     CONF_CUSTOM_PEOPLE,
     CONF_GLASS_BOARD,
     CONF_MAX_REPEATS,
+    CONF_OPEN_DASHBOARD,
     CONF_MEMBERS,
     CONF_PEOPLE,
     CONF_QUIET_END,
@@ -43,7 +44,7 @@ from .const import (
     DEFAULT_REPEAT_MINUTES,
     DOMAIN,
 )
-from .hub import discover_people, notify_services
+from .hub import HouseCall, discover_people, list_dashboards, normalize_path, notify_services
 
 
 class HouseCallConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -245,14 +246,21 @@ class HouseCallOptionsFlow(OptionsFlow):
             user_input.setdefault(CONF_SPEAKERS, [])
             user_input.setdefault(CONF_TTS, None)
             user_input.setdefault(CONF_BOARD_SERVICE, "")
+            user_input[CONF_OPEN_DASHBOARD] = normalize_path(user_input.get(CONF_OPEN_DASHBOARD))
             user_input[CONF_REPEAT_MINUTES] = int(user_input[CONF_REPEAT_MINUTES])
             user_input[CONF_MAX_REPEATS] = int(user_input[CONF_MAX_REPEATS])
             return self._save(user_input)
         o = self.config_entry.options
+        dashboards = ["/lovelace"] + [f"/{p}" for p in list_dashboards(self.hass)]
+        hub = getattr(self.config_entry, "runtime_data", None)
+        current_open = hub.open_url() if isinstance(hub, HouseCall) else normalize_path(o.get(CONF_OPEN_DASHBOARD))
         return self.async_show_form(
             step_id="outputs",
             data_schema=vol.Schema(
                 {
+                    vol.Optional(CONF_OPEN_DASHBOARD, description={"suggested_value": current_open}): SelectSelector(
+                        SelectSelectorConfig(options=dashboards, custom_value=True, mode=SelectSelectorMode.DROPDOWN)
+                    ),
                     vol.Optional(CONF_SPEAKERS, description={"suggested_value": o.get(CONF_SPEAKERS, [])}): EntitySelector(
                         EntitySelectorConfig(domain="media_player", multiple=True)
                     ),

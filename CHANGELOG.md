@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.0] - 2026-11-14
+
+### Added
+
+- **Tap a notification to open your HouseCall dashboard.** A plain tap on a HouseCall notification now opens the dashboard with your HouseCall card, right next to the **I'm on it** button, instead of the app's home screen. If you created the starter dashboard named **HouseCall**, it's used automatically. Choose another dashboard, or none, under **Configure → Phones, speakers, Glass Message Board and repeats**.
+
 ## [1.1.1] - 2026-11-14
 
 ### Fixed
