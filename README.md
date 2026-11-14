@@ -8,7 +8,7 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.11%2B-18BCF2.svg?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
-[![Version](https://img.shields.io/badge/version-1.1.0-6E56CF.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.1-6E56CF.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
@@ -373,6 +373,8 @@ Your browser hasn't loaded the card's file.
 | Speakers don't read alerts | Pick both a speaker and a voice under **Configure → Speakers, Glass Message Board and repeats**. |
 | A Normal message didn't reach my phone | Quiet hours are on. It shows on the board now and reaches phones when quiet hours end. |
 | Messages don't appear on Glass Message Board | Check Glass Message Board is installed and set up, and **Also post to Glass Message Board** is on under **Configure**. |
+| **I'm on it** doesn't respond on the card | Update to 1.1.1 or later, restart Home Assistant and hard-refresh the browser (**Ctrl + Shift + R**, or **Reset frontend cache** in the companion app). The button now changes to *Letting everyone know…* as soon as you tap it. |
+| I can't find **I'm on it** on my phone | The button is part of the notification, but it's hidden at first. On iPhone, **press and hold** the notification (or swipe it left and choose **View**). On Android, **swipe down** on the notification to expand it. |
 | A critical alert says **Nobody answered** | It reached the number of repeats you set, or Home Assistant restarted while it was waiting. |
 | The card looks like the old version after an update | Restart Home Assistant, then hard-refresh the browser or reset the companion app's frontend cache. |
 

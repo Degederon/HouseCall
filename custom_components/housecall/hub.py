@@ -402,8 +402,14 @@ class HouseCall:
         item["status"] = STATUS_ACKED
         item["acked_by"] = by or "someone"
         item["acked_at"] = dt_util.now().isoformat()
+        # Update the card straight away; talking to the phones can take a few seconds.
+        await self._changed()
+        self.hass.bus.async_fire(EVENT_ACKNOWLEDGED, {"id": item_id, "by": item["acked_by"]})
+        self.hass.async_create_task(self._after_ack(item, by))
+        return True
 
-        # Clear the alert from everyone's phone, then tell them who has it.
+    async def _after_ack(self, item: dict[str, Any], by: str | None) -> None:
+        # Clear the alert from everyone's phone, then tell the others who has it.
         for svc in self._services_for(item["to"]):
             if svc.startswith("mobile_app_"):
                 await self._call(
@@ -418,9 +424,6 @@ class HouseCall:
                      "title": "Handled", "via": []},
                     critical=False,
                 )
-        self.hass.bus.async_fire(EVENT_ACKNOWLEDGED, {"id": item_id, "by": item["acked_by"]})
-        await self._changed()
-        return True
 
     # ------------------------------------------------------------ quiet flush
 

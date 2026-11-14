@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.1.1] - 2026-11-14
+
+### Fixed
+
+- **I'm on it on the card now responds straight away.** The button changes to *Letting everyone know…*, the card updates at once, and clearing the alert from phones happens in the background instead of making the button wait.
+- Messages about the card (sent, handled, errors) now also show when the composer is turned off.
+
+### Added
+
+- Troubleshooting: how to find **I'm on it** in a phone notification (press and hold on iPhone, swipe down on Android).
+
 ## [1.1.0] - 2026-11-14
 
 ### Added

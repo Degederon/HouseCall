@@ -1,6 +1,6 @@
 /* HouseCall card — glass-style feed + composer for Home Assistant. */
 (() => {
-  const VERSION = "1.1.0";
+  const VERSION = "1.1.1";
 
   const PRIO = {
     info: { label: "Info", color: "#5EE6FF", tint: "rgba(94,230,255,0.14)", glow: "rgba(94,230,255,0.45)" },
@@ -99,8 +99,9 @@
     .ok { display:inline-flex; align-items:center; gap:4px; color:#7CF0B5; font-weight:600; }
     .ok span { width:12px; height:12px; display:block; }
     .warn { color:#FFB0B0; font-weight:600; }
-    .ack { margin-top:10px; min-height:40px; padding:0 16px; border-radius:12px; border:none; cursor:pointer;
+    .ack { position:relative; z-index:1; touch-action:manipulation; -webkit-tap-highlight-color:transparent; margin-top:10px; min-height:40px; padding:0 16px; border-radius:12px; border:none; cursor:pointer;
       font:700 13px Inter, system-ui, sans-serif; color:#1A0508; background:#FF6B6B; box-shadow:0 8px 22px rgba(255,107,107,0.4); }
+    .ack[disabled] { opacity:.75; cursor:default; box-shadow:none; }
     .empty { padding:26px 10px; text-align:center; color:var(--hc-muted); font-size:13px; }
     .composer { display:flex; flex-direction:column; gap:14px; }
     input.text { width:100%; height:46px; padding:0 14px; border-radius:13px; border:1px solid rgba(255,255,255,0.18);
@@ -122,7 +123,7 @@
     .send:active { transform:scale(0.98); }
     .send span { width:17px; height:17px; display:block; }
     .send[disabled] { opacity:.6; cursor:default; }
-    .toast { font-size:12px; color:#7CF0B5; min-height:16px; }
+    .toast { font-size:13px; color:#7CF0B5; min-height:18px; margin-top:10px; }
     .err { padding:16px; color:#FFB0B0; }
     button:focus-visible { outline:2px solid #7FE3FF; outline-offset:2px; }
   `;
@@ -208,9 +209,9 @@
               <div><p class="label">How urgent</p><div class="seg" id="prio"></div></div>
               <div class="route" id="route"></div>
               <button class="send" id="send" type="button"><span>${ICON.send}</span>Send now</button>
-              <div class="toast" id="toast" role="status"></div>
             </section>` : ""}
           </div>
+          <div class="toast" id="toast" role="status"></div>
         </ha-card>`;
       this._built = true;
       const $ = (id) => this.shadowRoot.getElementById(id);
@@ -222,9 +223,14 @@
         });
         this._renderPrio();
       }
+      if (this._clickBound) return;
+      this._clickBound = true;
       this.shadowRoot.addEventListener("click", (e) => {
         const ack = e.target.closest("[data-ack]");
-        if (ack) this._ack(ack.dataset.ack);
+        if (ack) {
+          e.stopPropagation();
+          this._ack(ack.dataset.ack, ack);
+        }
         const who = e.target.closest("[data-who]");
         if (who) this._toggleWho(who.dataset.who);
         const p = e.target.closest("[data-prio]");
@@ -389,11 +395,21 @@
       }
     }
 
-    async _ack(id) {
+    async _ack(id, btn) {
+      if (btn) {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = "Letting everyone know…";
+      }
       const me = this._hass.user && this._hass.user.name;
       try {
         await this._hass.callService("housecall", "acknowledge", me ? { id, by: me } : { id });
+        this._toast("Got it. Everyone's been told you're handling it.");
       } catch (e) {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "I'm on it";
+        }
         this._toast("Couldn't update: " + (e.message || e), true);
       }
     }
