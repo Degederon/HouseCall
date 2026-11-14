@@ -130,6 +130,8 @@ class HouseCall:
         result = []
         for pid, services in (self.opts.get(CONF_PEOPLE) or {}).items():
             state = self.hass.states.get(pid)
+            if state is None and self.hass.is_running:
+                continue  # deleted from Settings -> People
             name = (
                 state.attributes.get("friendly_name")
                 if state

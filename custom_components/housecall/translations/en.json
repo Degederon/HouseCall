@@ -15,14 +15,17 @@
       "init": {
         "title": "HouseCall settings",
         "menu_options": {
-          "people": "People and their phones",
+          "people": "People: add, remove, and their phones",
           "quiet": "Quiet hours",
           "outputs": "Speakers, Glass Message Board and repeats"
         }
       },
       "people": {
         "title": "People and their phones",
-        "description": "Pick the phone(s) for each person. Messages are sent to people, and the Hub uses these phones."
+        "description": "Tick who gets HouseCall messages. Untick someone to leave them out. Then pick each person's phone(s) below.\n\nTo add someone new, first add them under Settings → People, then come back here.\n\nPhone lists below are labelled by person: {names}",
+        "data": {
+          "members": "Who's in HouseCall"
+        }
       },
       "quiet": {
         "title": "Quiet hours",

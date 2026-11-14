@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.0.1] - 2026-11-14
+
+### Added
+
+- **Who's in HouseCall:** under **Configure → People**, tick or untick people to add them to HouseCall or leave them out, without deleting them from Home Assistant.
+
+### Fixed
+
+- People deleted under **Settings → People** no longer appear on the card or in **Everyone**.
+
 ## [1.0.0] - 2026-11-13
 
 The first release of HouseCall.

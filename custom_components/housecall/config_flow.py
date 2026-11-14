@@ -15,6 +15,7 @@ from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
@@ -26,6 +27,7 @@ from .const import (
     CONF_BOARD_SERVICE,
     CONF_GLASS_BOARD,
     CONF_MAX_REPEATS,
+    CONF_MEMBERS,
     CONF_PEOPLE,
     CONF_QUIET_END,
     CONF_QUIET_START,
@@ -92,21 +94,42 @@ class HouseCallOptionsFlow(OptionsFlow):
     async def async_step_people(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         current: dict[str, list[str]] = dict(self.config_entry.options.get(CONF_PEOPLE) or {})
         found = discover_people(self.hass)
-        person_ids = sorted(set(found) | set(current))
+        # Only people that still exist in Home Assistant (Settings -> People).
+        person_ids = sorted(found)
         if user_input is not None:
-            return self._save({CONF_PEOPLE: {pid: list(user_input.get(pid, [])) for pid in person_ids}})
+            members = [pid for pid in user_input.get(CONF_MEMBERS, []) if pid in person_ids]
+            return self._save({CONF_PEOPLE: {pid: list(user_input.get(pid, [])) for pid in members}})
 
+        def label(pid: str) -> str:
+            state = self.hass.states.get(pid)
+            return state.attributes.get("friendly_name", pid) if state else pid
+
+        members_default = [pid for pid in person_ids if pid in current] if current else person_ids
         options = set(notify_services(self.hass))
         for svcs in list(current.values()) + list(found.values()):
             options.update(svcs)
-        selector = SelectSelector(
+        phones = SelectSelector(
             SelectSelectorConfig(options=sorted(options), multiple=True, mode=SelectSelectorMode.DROPDOWN)
         )
-        schema = {}
+        schema: dict[Any, Any] = {
+            vol.Optional(CONF_MEMBERS, default=members_default): SelectSelector(
+                SelectSelectorConfig(
+                    options=[SelectOptionDict(value=pid, label=label(pid)) for pid in person_ids],
+                    multiple=True,
+                    mode=SelectSelectorMode.LIST,
+                )
+            )
+        }
         for pid in person_ids:
-            default = current.get(pid, found.get(pid, []))
-            schema[vol.Optional(pid, default=default)] = selector
-        return self.async_show_form(step_id="people", data_schema=vol.Schema(schema))
+            default = [s for s in current.get(pid, found.get(pid, [])) if s in options]
+            schema[vol.Optional(pid, default=default)] = phones
+        return self.async_show_form(
+            step_id="people",
+            data_schema=vol.Schema(schema),
+            description_placeholders={
+                "names": ", ".join(f"{label(pid)} = {pid}" for pid in person_ids) or "nobody yet"
+            },
+        )
 
     async def async_step_quiet(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
