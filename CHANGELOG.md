@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.1.1] - 2026-11-13
+
+### Added
+
+- **Starter dashboard** (`examples/starter-dashboard.yaml`): the HouseCall card, one-tap quick messages, status and test buttons, and a full-screen kitchen display. See Part 6 of the README.
+
 ## [0.1.0] - 2026-11-13
 
 ### Added
@@ -15,4 +21,3 @@ All notable changes to this project are documented in this file.
 - Actions `housecall.send`, `housecall.acknowledge` and `housecall.clear_history`; `sensor.housecall`; events `housecall_updated` and `housecall_acknowledged`.
 - Setup, people, quiet hours and speakers from the Home Assistant screens, no YAML.
 - HouseCall icon for Home Assistant and the Marketplace.
-- A starter dashboard (`examples/starter-dashboard.yaml`) with quick messages, status, test buttons and a kitchen display view.
