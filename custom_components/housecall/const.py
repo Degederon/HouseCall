@@ -1,7 +1,7 @@
 """Constants for HouseCall."""
 
 DOMAIN = "housecall"
-VERSION = "0.1.1"
+VERSION = "1.0.0"
 
 CONF_PEOPLE = "people"  # {person_entity_id: [notify service names, without "notify."]}
 CONF_QUIET_START = "quiet_start"
