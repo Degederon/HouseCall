@@ -15,14 +15,16 @@
       "init": {
         "title": "HouseCall settings",
         "menu_options": {
-          "people": "People: add, remove, and their phones",
+          "people": "People from Home Assistant: show or hide",
+          "add_person": "Add a HouseCall-only person",
+          "edit_person": "Change or remove a HouseCall-only person",
           "quiet": "Quiet hours",
           "outputs": "Speakers, Glass Message Board and repeats"
         }
       },
       "people": {
-        "title": "People and their phones",
-        "description": "Tick who gets HouseCall messages. Untick someone to leave them out. Then pick each person's phone(s) below.\n\nTo add someone new, first add them under Settings → People, then come back here.\n\nPhone lists below are labelled by person: {names}",
+        "title": "People from Home Assistant",
+        "description": "Tick who appears in HouseCall. Untick anyone you want to hide (for example service or guest accounts). They stay in Home Assistant, but HouseCall won't show or message them.\n\nThen pick each person's phone(s) below.\n\nPhone lists below are labelled by person: {names}",
         "data": {
           "members": "Who's in HouseCall"
         }
@@ -46,7 +48,35 @@
           "max_repeats": "Stop repeating after this many times",
           "glass_board": "Also post to Glass Message Board (if installed)"
         }
+      },
+      "add_person": {
+        "title": "Add a HouseCall-only person",
+        "description": "Create someone just for HouseCall, such as Grandma or the babysitter. They don't need a Home Assistant account and won't appear under Settings → People.\n\nFor their phone, pick any notify action they receive messages on. For \"home\", you can pick a device tracker, sensor or toggle (optional).",
+        "data": {
+          "name": "Name",
+          "services": "Phone(s) to notify",
+          "presence": "Shows whether they're home (optional)"
+        }
+      },
+      "edit_person": {
+        "title": "Change or remove a HouseCall-only person",
+        "data": {
+          "person": "Who"
+        }
+      },
+      "edit_person_details": {
+        "title": "{name}",
+        "description": "Change their details, or tick Remove to delete them from HouseCall.",
+        "data": {
+          "name": "Name",
+          "services": "Phone(s) to notify",
+          "presence": "Shows whether they're home (optional)",
+          "remove": "Remove this person from HouseCall"
+        }
       }
+    },
+    "error": {
+      "name_required": "Please type a name."
     }
   },
   "services": {
@@ -64,7 +94,7 @@
         },
         "to": {
           "name": "To",
-          "description": "People to notify. Leave empty for everyone."
+          "description": "Who to notify: a name (Jay, Grandma), a person entity (person.jay), a list, or everyone. Leave empty for everyone."
         },
         "priority": {
           "name": "How urgent",

@@ -8,7 +8,7 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.11%2B-18BCF2.svg?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
-[![Version](https://img.shields.io/badge/version-1.0.1-6E56CF.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-6E56CF.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
@@ -38,7 +38,7 @@ HouseCall makes notifications in Home Assistant simple. You send a message to **
 
 | Feature | Description |
 |---|---|
-| **People, not devices** | Send to *Me*, *Jay* or *Everyone*. HouseCall finds each person's phone from the Companion app automatically. |
+| **People, not devices** | Send to *Me*, *Jay* or *Everyone*. HouseCall finds each person's phone from the Companion app automatically. Hide accounts you don't want, or add HouseCall-only people such as Grandma. |
 | **Three levels of urgency** | **Info** shows on the board only. **Normal** goes to phones and the board. **Critical** is loud, breaks through silent mode, and repeats until someone answers. |
 | **Quiet hours** | Normal messages wait until morning and still show on the board. Critical alerts always come through. |
 | **"I'm on it"** | One tap on a phone or the card stops the repeats, clears the alert from everyone's phone, and tells the others who's handling it. |
@@ -129,7 +129,8 @@ To confirm it's working, open **Developer tools → States** and look for `senso
 
    | Menu | What you set |
    |---|---|
-   | **People** | Who's in HouseCall, and the phone(s) for each person. See [Adding and removing people](#adding-and-removing-people). |
+   | **People from Home Assistant: show or hide** | Who appears in HouseCall, and their phone(s). See [Adding and removing people](#adding-and-removing-people). |
+   | **Add / change a HouseCall-only person** | People who aren't in Home Assistant, such as Grandma or the babysitter. |
    | **Quiet hours** | When Normal messages wait until morning. Default: 10 PM to 7 AM. |
    | **Speakers, Glass Message Board and repeats** | Speakers and a voice for critical alerts, whether to post to Glass Message Board, how often critical alerts repeat (default every 5 minutes) and when to stop (default after 6 times). |
 
@@ -137,18 +138,36 @@ To confirm it's working, open **Developer tools → States** and look for `senso
 
 ### Adding and removing people
 
-HouseCall uses the people in Home Assistant's own **People** list.
+HouseCall can use two kinds of people:
 
-**To add someone:**
+- **People from Home Assistant**, from **Settings → People**. You choose which of them appear in HouseCall.
+- **HouseCall-only people**, created inside HouseCall, such as Grandma or the babysitter. They don't need a Home Assistant account and don't appear under **Settings → People**.
 
-1. Go to **Settings → People** and select **+ Add person**. Give them a name, link their Home Assistant user, and under **Track device** pick their phone (it appears once they've signed in to the Companion app).
-2. Go to **Settings → Devices & services → HouseCall → Configure → People**.
-3. Tick them under **Who's in HouseCall**, check their phone is picked, and select **Submit**.
+All the settings below are under **Settings → Devices & services → HouseCall → Configure**.
 
-**To remove someone:**
+**Hide someone (for example a service or guest account you can't delete)**
 
-- **From HouseCall only:** go to **Configure → People**, untick them under **Who's in HouseCall**, and select **Submit**. They stay in Home Assistant but no longer get HouseCall messages or appear on the card.
-- **From Home Assistant completely:** delete them under **Settings → People**. HouseCall stops using them straight away.
+1. Choose **People from Home Assistant: show or hide**.
+2. Untick them under **Who's in HouseCall** and select **Submit**.
+
+They stay in Home Assistant, but HouseCall won't show them on the card, message them, or count them in **Everyone**. Tick them again to bring them back.
+
+**Add a HouseCall-only person**
+
+1. Choose **Add a HouseCall-only person**.
+2. Type their **Name** and pick the **Phone(s) to notify**: any notify action they get messages on, such as their Companion app.
+3. Optionally pick something that **Shows whether they're home**: a device tracker, a sensor or a toggle. Leave it empty and the card simply doesn't show Home or Away for them.
+4. Select **Submit**. They appear on the card straight away, and you can send to them by name: `to: Grandma`.
+
+**Change or remove a HouseCall-only person**
+
+1. Choose **Change or remove a HouseCall-only person** and pick who.
+2. Change their details, or tick **Remove this person from HouseCall**, then select **Submit**.
+
+**Add someone from Home Assistant**
+
+1. Add them under **Settings → People** and pick their phone under **Track device**.
+2. In HouseCall, choose **People from Home Assistant: show or hide**, tick them, check their phone, and select **Submit**.
 
 ### Part 4: Add the card to a dashboard
 
@@ -229,7 +248,7 @@ If nobody answers after the last repeat, the message is marked **Nobody answered
 | Field | Required | Description |
 |---|---|---|
 | `message` | Yes | What to say. |
-| `to` | No | A person (`person.jay`), a name (`Jay`), a list, or `everyone`. Leave it out for everyone. |
+| `to` | No | A name (`Jay`, `Grandma`), a person (`person.jay`), a list, or `everyone`. Leave it out for everyone. HouseCall-only people are sent to by name. |
 | `priority` | No | `info`, `normal` (default) or `critical`. |
 | `title` | No | A title on phone notifications. |
 
@@ -348,7 +367,7 @@ Your browser hasn't loaded the card's file.
 
 | Problem | Solution |
 |---|---|
-| A person shows **0 phones** | The Companion app's tracker isn't linked to that person. Pick the phone under **Configure → People**, or add the phone's tracker to the person under **Settings → People**. |
+| A person shows **0 phones** | The Companion app's tracker isn't linked to that person. Pick the phone under **Configure → People from Home Assistant: show or hide**, or add the phone's tracker to the person under **Settings → People**. |
 | Critical alerts aren't loud on iPhone | Allow **Critical Alerts** for the Home Assistant app in iPhone **Settings → Notifications → Home Assistant**. |
 | Critical alerts aren't loud on Android | In the Companion app, open **Settings → Companion app → Notification channels → alarm_stream** and allow sound. |
 | Speakers don't read alerts | Pick both a speaker and a voice under **Configure → Speakers, Glass Message Board and repeats**. |

@@ -8,6 +8,7 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.core import callback
+from homeassistant.util import slugify
 from homeassistant.helpers.selector import (
     BooleanSelector,
     EntitySelector,
@@ -25,6 +26,7 @@ from homeassistant.helpers.selector import (
 
 from .const import (
     CONF_BOARD_SERVICE,
+    CONF_CUSTOM_PEOPLE,
     CONF_GLASS_BOARD,
     CONF_MAX_REPEATS,
     CONF_MEMBERS,
@@ -34,6 +36,7 @@ from .const import (
     CONF_REPEAT_MINUTES,
     CONF_SPEAKERS,
     CONF_TTS,
+    CUSTOM_PREFIX,
     DEFAULT_MAX_REPEATS,
     DEFAULT_QUIET_END,
     DEFAULT_QUIET_START,
@@ -86,7 +89,99 @@ class HouseCallOptionsFlow(OptionsFlow):
     """Change people, quiet hours and outputs later."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self.async_show_menu(step_id="init", menu_options=["people", "quiet", "outputs"])
+        menu = ["people", "add_person"]
+        if self.config_entry.options.get(CONF_CUSTOM_PEOPLE):
+            menu.append("edit_person")
+        menu += ["quiet", "outputs"]
+        return self.async_show_menu(step_id="init", menu_options=menu)
+
+    # ------------------------------------------------ HouseCall-only people
+
+    def _phone_selector(self) -> SelectSelector:
+        options = set(notify_services(self.hass))
+        for info in (self.config_entry.options.get(CONF_CUSTOM_PEOPLE) or {}).values():
+            options.update(info.get("services") or [])
+        return SelectSelector(
+            SelectSelectorConfig(options=sorted(options), multiple=True, mode=SelectSelectorMode.DROPDOWN)
+        )
+
+    def _person_schema(self, info: dict[str, Any], with_remove: bool) -> vol.Schema:
+        schema: dict[Any, Any] = {
+            vol.Required("name", default=info.get("name", "")): TextSelector(),
+            vol.Optional("services", default=list(info.get("services") or [])): self._phone_selector(),
+            vol.Optional("presence", description={"suggested_value": info.get("presence")}): EntitySelector(
+                EntitySelectorConfig(domain=["device_tracker", "binary_sensor", "input_boolean"])
+            ),
+        }
+        if with_remove:
+            schema[vol.Optional("remove", default=False)] = BooleanSelector()
+        return vol.Schema(schema)
+
+    async def async_step_add_person(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            name = (user_input.get("name") or "").strip()
+            if not name:
+                errors["name"] = "name_required"
+            else:
+                custom = dict(self.config_entry.options.get(CONF_CUSTOM_PEOPLE) or {})
+                base = CUSTOM_PREFIX + (slugify(name) or "person")
+                cid, n = base, 2
+                while cid in custom:
+                    cid, n = f"{base}_{n}", n + 1
+                custom[cid] = {
+                    "name": name,
+                    "services": list(user_input.get("services") or []),
+                    "presence": user_input.get("presence"),
+                }
+                return self._save({CONF_CUSTOM_PEOPLE: custom})
+        return self.async_show_form(
+            step_id="add_person", data_schema=self._person_schema(user_input or {}, False), errors=errors
+        )
+
+    async def async_step_edit_person(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        custom = self.config_entry.options.get(CONF_CUSTOM_PEOPLE) or {}
+        if user_input is not None:
+            self._editing = user_input["person"]
+            return await self.async_step_edit_person_details()
+        return self.async_show_form(
+            step_id="edit_person",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("person"): SelectSelector(
+                        SelectSelectorConfig(
+                            options=[SelectOptionDict(value=cid, label=i.get("name", cid)) for cid, i in custom.items()],
+                            mode=SelectSelectorMode.LIST,
+                        )
+                    )
+                }
+            ),
+        )
+
+    async def async_step_edit_person_details(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        custom = dict(self.config_entry.options.get(CONF_CUSTOM_PEOPLE) or {})
+        cid = self._editing
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            if user_input.get("remove"):
+                custom.pop(cid, None)
+                return self._save({CONF_CUSTOM_PEOPLE: custom})
+            name = (user_input.get("name") or "").strip()
+            if not name:
+                errors["name"] = "name_required"
+            else:
+                custom[cid] = {
+                    "name": name,
+                    "services": list(user_input.get("services") or []),
+                    "presence": user_input.get("presence"),
+                }
+                return self._save({CONF_CUSTOM_PEOPLE: custom})
+        return self.async_show_form(
+            step_id="edit_person_details",
+            data_schema=self._person_schema(user_input or custom.get(cid, {}), True),
+            errors=errors,
+            description_placeholders={"name": custom.get(cid, {}).get("name", "")},
+        )
 
     def _save(self, changes: dict[str, Any]) -> ConfigFlowResult:
         return self.async_create_entry(data={**self.config_entry.options, **changes})

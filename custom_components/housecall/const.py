@@ -1,10 +1,12 @@
 """Constants for HouseCall."""
 
 DOMAIN = "housecall"
-VERSION = "1.0.1"
+VERSION = "1.1.0"
 
 CONF_MEMBERS = "members"  # options-screen field only
-CONF_PEOPLE = "people"  # {person_entity_id: [notify service names, without "notify."]}
+CONF_PEOPLE = "people"
+CONF_CUSTOM_PEOPLE = "custom_people"  # {id: {name, services, presence}}
+CUSTOM_PREFIX = "housecall."  # {person_entity_id: [notify service names, without "notify."]}
 CONF_QUIET_START = "quiet_start"
 CONF_QUIET_END = "quiet_end"
 CONF_SPEAKERS = "speakers"

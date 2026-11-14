@@ -18,6 +18,7 @@ from homeassistant.util import dt as dt_util, slugify
 from .const import (
     ACK_PREFIX,
     CONF_BOARD_SERVICE,
+    CONF_CUSTOM_PEOPLE,
     CONF_GLASS_BOARD,
     CONF_MAX_REPEATS,
     CONF_PEOPLE,
@@ -128,6 +129,7 @@ class HouseCall:
 
     def people(self) -> list[dict[str, Any]]:
         result = []
+        # People from Settings -> People that are ticked in HouseCall.
         for pid, services in (self.opts.get(CONF_PEOPLE) or {}).items():
             state = self.hass.states.get(pid)
             if state is None and self.hass.is_running:
@@ -144,6 +146,21 @@ class HouseCall:
                     "services": list(services or []),
                     "home": bool(state and state.state == "home"),
                     "user_id": state.attributes.get("user_id") if state else None,
+                    "custom": False,
+                }
+            )
+        # People created only in HouseCall.
+        for cid, info in (self.opts.get(CONF_CUSTOM_PEOPLE) or {}).items():
+            presence = info.get("presence")
+            pstate = self.hass.states.get(presence) if presence else None
+            result.append(
+                {
+                    "id": cid,
+                    "name": info.get("name") or cid.split(".", 1)[-1].title(),
+                    "services": list(info.get("services") or []),
+                    "home": (pstate.state in ("home", "on")) if pstate else None,
+                    "user_id": None,
+                    "custom": True,
                 }
             )
         return result
@@ -311,7 +328,8 @@ class HouseCall:
         # Glass Message Board: post a tinted note, without its own phone notifications.
         if self.opts.get(CONF_GLASS_BOARD, True) and self.hass.services.has_service("glass_messages", "post"):
             tint = {PRIORITY_INFO: "sky", PRIORITY_NORMAL: "amber", PRIORITY_CRITICAL: "rose"}.get(item["priority"], "clear")
-            to = item["to"][0] if len(item["to"]) == 1 and len(self.people()) > 1 else "everyone"
+            single = item["to"][0] if len(item["to"]) == 1 and len(self.people()) > 1 else None
+            to = single if single and single.startswith("person.") else "everyone"
             await self._call(
                 "glass_messages", "post",
                 {

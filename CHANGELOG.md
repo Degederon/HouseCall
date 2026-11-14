@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.1.0] - 2026-11-14
+
+### Added
+
+- **HouseCall-only people.** Under **Configure → Add a HouseCall-only person**, create people who aren't in Home Assistant, such as Grandma or the babysitter: a name, the phone(s) to notify, and optionally something that shows whether they're home. Change or remove them later under **Change or remove a HouseCall-only person**.
+- Send to anyone by name, for example `to: Grandma`.
+
+### Changed
+
+- **Hide people from Home Assistant.** The People screen is now called **People from Home Assistant: show or hide** and explains how to hide accounts you can't delete.
+- The card leaves out Home or Away for people with nothing tracking where they are.
+- The **To** field of **HouseCall: Send** is now a text box, so it accepts names as well as people.
+
 ## [1.0.1] - 2026-11-14
 
 ### Added
