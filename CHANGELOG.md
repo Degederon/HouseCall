@@ -15,3 +15,4 @@ All notable changes to this project are documented in this file.
 - Actions `housecall.send`, `housecall.acknowledge` and `housecall.clear_history`; `sensor.housecall`; events `housecall_updated` and `housecall_acknowledged`.
 - Setup, people, quiet hours and speakers from the Home Assistant screens, no YAML.
 - HouseCall icon for Home Assistant and the Marketplace.
+- A starter dashboard (`examples/starter-dashboard.yaml`) with quick messages, status, test buttons and a kitchen display view.

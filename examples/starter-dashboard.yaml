@@ -1,0 +1,198 @@
+# HouseCall starter dashboard
+#
+# How to use it:
+#   1. Settings → Dashboards → + Add dashboard → New dashboard from scratch.
+#      Name it "HouseCall" and open it.
+#   2. Select the pencil (top right), then ⋮ → Raw configuration editor.
+#   3. Delete what's there, paste this whole file, and select Save.
+#
+# Everything uses HouseCall plus Home Assistant's own cards. Change the quick
+# messages to suit your house: the words, who they go to, and how urgent.
+
+title: HouseCall
+views:
+  # ---------------------------------------------------------------- Home view
+  - title: Home
+    path: home
+    icon: mdi:bell-ring
+    type: sections
+    max_columns: 3
+    sections:
+      # The full HouseCall card: today's messages, who's home, and the composer.
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:housecall-card
+            grid_options:
+              columns: full
+
+      # One-tap messages.
+      - type: grid
+        cards:
+          - type: heading
+            heading: Quick messages
+            icon: mdi:lightning-bolt
+
+          - type: button
+            name: Dinner's ready
+            icon: mdi:silverware-fork-knife
+            grid_options:
+              columns: 6
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: housecall.send
+              data:
+                message: "Dinner's ready!"
+                to: everyone
+                priority: normal
+
+          - type: button
+            name: Come here, please
+            icon: mdi:hand-wave
+            grid_options:
+              columns: 6
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: housecall.send
+              data:
+                message: "Can you come here, please?"
+                to: everyone
+                priority: normal
+
+          - type: button
+            name: Leaving now
+            icon: mdi:car
+            grid_options:
+              columns: 6
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: housecall.send
+              data:
+                message: "Leaving now."
+                to: everyone
+                priority: info
+
+          - type: button
+            name: On my way home
+            icon: mdi:home-import-outline
+            grid_options:
+              columns: 6
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: housecall.send
+              data:
+                message: "On my way home."
+                to: everyone
+                priority: info
+
+          - type: button
+            name: Dogs fed
+            icon: mdi:dog-side
+            grid_options:
+              columns: 6
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: housecall.send
+              data:
+                message: "The dogs have been fed."
+                to: everyone
+                priority: info
+
+          - type: button
+            name: Good night
+            icon: mdi:weather-night
+            grid_options:
+              columns: 6
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: housecall.send
+              data:
+                message: "Good night, everyone."
+                to: everyone
+                priority: info
+
+          - type: heading
+            heading: Status and tests
+            icon: mdi:shield-check
+
+          - type: tile
+            entity: sensor.housecall
+            name: Waiting for an answer
+            icon: mdi:bell-alert
+            grid_options:
+              columns: 12
+
+          - type: button
+            name: Test a normal message
+            icon: mdi:bell-outline
+            grid_options:
+              columns: 6
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: housecall.send
+              data:
+                message: "HouseCall test: normal message."
+                to: everyone
+                priority: normal
+
+          - type: button
+            name: Test a critical alert
+            icon: mdi:alarm-light
+            grid_options:
+              columns: 6
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: housecall.send
+              data:
+                message: "HouseCall test: critical alert. Tap I'm on it to stop it."
+                to: everyone
+                priority: critical
+              confirmation:
+                text: >-
+                  This sounds LOUDLY on everyone's phone, even on silent, and
+                  repeats until someone taps "I'm on it". Send the test?
+
+          - type: button
+            name: Clear history
+            icon: mdi:broom
+            grid_options:
+              columns: 12
+              rows: 1
+            tap_action:
+              action: perform-action
+              perform_action: housecall.clear_history
+              confirmation:
+                text: Remove every message from HouseCall?
+
+      # Optional: if you use Glass Message Board or Grand Marquee, remove the
+      # # signs below to add them to this page.
+      # - type: grid
+      #   column_span: 3
+      #   cards:
+      #     - type: custom:grand-marquee
+      #       sources: [messages, board]
+      #       grid_options:
+      #         columns: full
+      #     - type: custom:glass-message-board
+      #       grid_options:
+      #         columns: full
+
+  # ----------------------------------------------------- Kitchen display view
+  # A full-screen feed with no composer, for a wall tablet.
+  - title: Kitchen display
+    path: kitchen
+    icon: mdi:tablet-dashboard
+    type: panel
+    cards:
+      - type: custom:housecall-card
+        title: Kitchen
+        show_composer: false
+        max_items: 30

@@ -23,6 +23,7 @@ HouseCall makes notifications in Home Assistant simple. You send a message to **
 - [Take a tour](#take-a-tour)
 - [Requirements](#requirements)
 - [Step-by-step setup](#step-by-step-setup)
+  - [Starter dashboard](#part-6-start-from-the-sample-dashboard-optional)
 - [Dashboard configuration](#dashboard-configuration)
 - [How urgency works](#how-urgency-works)
 - [Actions](#actions)
@@ -147,6 +148,19 @@ The card's file is loaded automatically. You don't need to add it under **Resour
 2. Pick **Everyone** and **Normal**. Read **Where it will go**.
 3. Select **Send now**. Your phone buzzes and the message appears in the feed.
 4. Try a **Critical** message to yourself: your phone sounds even on silent. Tap **I'm on it** on the phone or the card to stop it.
+
+### Part 6: Start from the sample dashboard (optional)
+
+Want a ready-made page? The [starter dashboard](examples/starter-dashboard.yaml) has two views:
+
+- **Home:** the full HouseCall card, one-tap **Quick messages** (Dinner's ready, Come here please, Leaving now, On my way home, Dogs fed, Good night), the number of alerts waiting for an answer, and test buttons.
+- **Kitchen display:** a full-screen feed with no composer, for a wall tablet.
+
+1. Go to **Settings → Dashboards**, select **+ Add dashboard**, choose **New dashboard from scratch**, name it **HouseCall** and open it.
+2. Select the pencil (top right), then **⋮ → Raw configuration editor**.
+3. Delete what's there, paste the whole [starter dashboard](examples/starter-dashboard.yaml), and select **Save**.
+
+Change the quick messages to suit your house: the words, who they go to (`to: person.jay`), and how urgent they are. If you also use Glass Message Board or Grand Marquee, the file shows where to add them.
 
 ## Dashboard configuration
 
