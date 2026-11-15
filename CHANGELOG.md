@@ -4,6 +4,10 @@ All notable changes to this project are documented in this file.
 
 ## [1.4.0] - 2026-11-14
 
+### Changed
+
+- **Clearer instructions.** The README is rewritten in plain language and in the order you need it: what HouseCall does, the three levels of urgency, setup in 5 steps, everyday use, settings, and the optional extras.
+
 ### Added
 
 - **Each messaging app gets its own address for each person.** After ticking a person's apps, HouseCall asks where each one should send: a number for Signal, Facebook Messenger or text messages, an email address, a Discord, Slack or Matrix channel, or a Threema ID. Separate several with commas. Settings from 1.3.0 keep working.
