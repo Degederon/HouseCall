@@ -1,11 +1,22 @@
 """Constants for HouseCall."""
 
 DOMAIN = "housecall"
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 
 CONF_MEMBERS = "members"  # options-screen field only
 CONF_PEOPLE = "people"
-CONF_CUSTOM_PEOPLE = "custom_people"  # {id: {name, services, presence}}
+CONF_CUSTOM_PEOPLE = "custom_people"
+CONF_CHANNELS = "channels"  # {person_id: {"routes": ["notify.x", ...], "address": "+1555..."}}
+CONF_CHANNEL_MODE = "channel_mode"
+CHANNEL_NEVER = "never"
+CHANNEL_NO_APP = "no_app"
+CHANNEL_CRITICAL = "critical"
+CHANNEL_ALL = "all"
+CHANNEL_MODES = [CHANNEL_CRITICAL, CHANNEL_ALL, CHANNEL_NO_APP, CHANNEL_NEVER]
+DEFAULT_CHANNEL_MODE = CHANNEL_CRITICAL
+TEST_ALL = "all"
+TEST_APP = "app"
+TEST_MESSAGING = "messaging"  # {id: {name, services, presence}}
 CUSTOM_PREFIX = "housecall."  # {person_entity_id: [notify service names, without "notify."]}
 CONF_QUIET_START = "quiet_start"
 CONF_QUIET_END = "quiet_end"

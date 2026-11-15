@@ -57,7 +57,7 @@ class HouseCallSensor(SensorEntity):
         return {
             "history": self.hub.history[:50],
             "people": [
-                {"id": p["id"], "name": p["name"], "home": p["home"], "phones": len(p["services"]), "custom": p["custom"]}
+                {"id": p["id"], "name": p["name"], "home": p["home"], "phones": len(p["services"]), "apps": len(p.get("routes", [])), "custom": p["custom"]}
                 for p in self.hub.people()
             ],
             "quiet_hours": {

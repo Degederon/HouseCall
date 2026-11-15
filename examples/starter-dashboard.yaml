@@ -161,6 +161,19 @@ views:
                   repeats until someone taps "I'm on it". Send the test?
 
           - type: button
+            name: Test messaging apps
+            icon: mdi:message-check
+            grid_options:
+              columns: 12
+              rows: 1
+            tap_action:
+              action: perform-action
+              perform_action: housecall.send_test
+              data:
+                to: Me              # change to a name, such as Grandma
+                how: messaging
+
+          - type: button
             name: Clear history
             icon: mdi:broom
             grid_options:

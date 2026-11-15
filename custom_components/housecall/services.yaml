@@ -35,3 +35,20 @@ acknowledge:
       selector:
         text:
 clear_history:
+send_test:
+  fields:
+    to:
+      required: true
+      example: "Grandma"
+      selector:
+        text:
+    how:
+      required: false
+      default: all
+      selector:
+        select:
+          translation_key: test_how
+          options:
+            - all
+            - app
+            - messaging

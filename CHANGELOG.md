@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.3.0] - 2026-11-14
+
+### Added
+
+- **Messaging apps.** HouseCall can now also send through Telegram, Signal, WhatsApp (via Whatsigram), ntfy, Pushover, email and any other messaging integration in Home Assistant. Set it up under **Configure → Messaging apps**: choose when to use them, then pick which apps reach each person and, where needed, their number.
+- **When to use messaging apps:** critical alerts for everyone and everything for people without the Home Assistant app (default), every message, only people without the app, or never. Info messages and critical repeats never go to messaging apps.
+- **Send a test message** under **Configure**, with a ✅ or ❌ and the reason for every app tried. Also available as the `housecall.send_test` action, and as a **Test messaging apps** button on the starter dashboard.
+- The card shows how many messaging apps each person has, and lists *Messaging apps* under how a message was delivered.
+
 ## [1.2.0] - 2026-11-14
 
 ### Added

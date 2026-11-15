@@ -1,6 +1,6 @@
 /* HouseCall card — glass-style feed + composer for Home Assistant. */
 (() => {
-  const VERSION = "1.2.0";
+  const VERSION = "1.3.0";
 
   const PRIO = {
     info: { label: "Info", color: "#5EE6FF", tint: "rgba(94,230,255,0.14)", glow: "rgba(94,230,255,0.45)" },
@@ -16,7 +16,7 @@
     unanswered: "Nobody answered",
   };
 
-  const VIA = { phone: "Phones", board: "Board", speaker: "Speaker" };
+  const VIA = { phone: "Phones", board: "Board", speaker: "Speaker", messaging: "Messaging apps" };
 
   const esc = (s) =>
     String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -270,7 +270,7 @@
           <div class="person">
             <div class="av" style="background:${AVATARS[i % AVATARS.length]}">${esc((p.name || "?").charAt(0).toUpperCase())}
               ${p.home === null || p.home === undefined ? "" : `<i style="background:${p.home ? "#7CF0B5" : "#8792AE"}"></i>`}</div>
-            <div>${esc(p.name)}<small>${p.home === null || p.home === undefined ? "" : (p.home ? "Home · " : "Away · ")}${p.phones} phone${p.phones === 1 ? "" : "s"}</small></div>
+            <div>${esc(p.name)}<small>${p.home === null || p.home === undefined ? "" : (p.home ? "Home · " : "Away · ")}${p.phones} phone${p.phones === 1 ? "" : "s"}${p.apps ? ` · ${p.apps} app${p.apps === 1 ? "" : "s"}` : ""}</small></div>
           </div>`
         )
         .join("");

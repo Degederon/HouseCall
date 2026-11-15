@@ -26,6 +26,8 @@ from homeassistant.helpers.selector import (
 
 from .const import (
     CONF_BOARD_SERVICE,
+    CONF_CHANNEL_MODE,
+    CONF_CHANNELS,
     CONF_CUSTOM_PEOPLE,
     CONF_GLASS_BOARD,
     CONF_MAX_REPEATS,
@@ -38,13 +40,18 @@ from .const import (
     CONF_SPEAKERS,
     CONF_TTS,
     CUSTOM_PREFIX,
+    CHANNEL_MODES,
+    DEFAULT_CHANNEL_MODE,
     DEFAULT_MAX_REPEATS,
     DEFAULT_QUIET_END,
     DEFAULT_QUIET_START,
     DEFAULT_REPEAT_MINUTES,
     DOMAIN,
+    TEST_ALL,
+    TEST_APP,
+    TEST_MESSAGING,
 )
-from .hub import HouseCall, discover_people, list_dashboards, normalize_path, notify_services
+from .hub import HouseCall, discover_people, list_dashboards, messaging_routes, normalize_path, notify_services
 
 
 class HouseCallConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -93,8 +100,121 @@ class HouseCallOptionsFlow(OptionsFlow):
         menu = ["people", "add_person"]
         if self.config_entry.options.get(CONF_CUSTOM_PEOPLE):
             menu.append("edit_person")
-        menu += ["quiet", "outputs"]
+        menu += ["messaging", "send_test", "quiet", "outputs"]
         return self.async_show_menu(step_id="init", menu_options=menu)
+
+    # ------------------------------------------------------- shared helpers
+
+    def _hub(self) -> HouseCall | None:
+        hub = getattr(self.config_entry, "runtime_data", None)
+        return hub if isinstance(hub, HouseCall) else None
+
+    def _people_options(self) -> list[SelectOptionDict]:
+        hub = self._hub()
+        people = hub.people() if hub else []
+        return [SelectOptionDict(value=p["id"], label=p["name"]) for p in people]
+
+    # ------------------------------------------------------- messaging apps
+
+    async def async_step_messaging(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        o = self.config_entry.options
+        if user_input is not None:
+            mode = user_input.get(CONF_CHANNEL_MODE, DEFAULT_CHANNEL_MODE)
+            who = user_input.get("person")
+            if who:
+                self._pending_mode = mode
+                self._editing = who
+                return await self.async_step_messaging_person()
+            return self._save({CONF_CHANNEL_MODE: mode})
+        schema: dict[Any, Any] = {
+            vol.Required(CONF_CHANNEL_MODE, default=o.get(CONF_CHANNEL_MODE, DEFAULT_CHANNEL_MODE)): SelectSelector(
+                SelectSelectorConfig(options=CHANNEL_MODES, translation_key="channel_mode", mode=SelectSelectorMode.LIST)
+            ),
+        }
+        people = self._people_options()
+        if people:
+            schema[vol.Optional("person")] = SelectSelector(
+                SelectSelectorConfig(options=people, mode=SelectSelectorMode.DROPDOWN)
+            )
+        found = messaging_routes(self.hass)
+        return self.async_show_form(
+            step_id="messaging",
+            data_schema=vol.Schema(schema),
+            description_placeholders={
+                "found": "\n".join(f"- {label}" for label in found.values()) or "- None yet. Add Telegram bot, Signal Messenger, ntfy, Pushover or another messaging integration first."
+            },
+        )
+
+    async def async_step_messaging_person(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        pid = self._editing
+        channels = dict(self.config_entry.options.get(CONF_CHANNELS) or {})
+        current = channels.get(pid) or {}
+        if user_input is not None:
+            routes = list(user_input.get("routes") or [])
+            address = (user_input.get("address") or "").strip()
+            if routes or address:
+                channels[pid] = {"routes": routes, "address": address}
+            else:
+                channels.pop(pid, None)
+            return self._save({CONF_CHANNELS: channels, CONF_CHANNEL_MODE: getattr(self, "_pending_mode", DEFAULT_CHANNEL_MODE)})
+        found = messaging_routes(self.hass)
+        options = [SelectOptionDict(value=r, label=l) for r, l in found.items()]
+        for r in current.get("routes") or []:
+            if r not in found:
+                options.append(SelectOptionDict(value=r, label=f"{r} (not found)"))
+        name = next((o["label"] for o in self._people_options() if o["value"] == pid), pid)
+        return self.async_show_form(
+            step_id="messaging_person",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional("routes", default=list(current.get("routes") or [])): SelectSelector(
+                        SelectSelectorConfig(options=options, multiple=True, mode=SelectSelectorMode.LIST)
+                    ),
+                    vol.Optional("address", description={"suggested_value": current.get("address", "")}): TextSelector(),
+                }
+            ),
+            description_placeholders={"name": name},
+        )
+
+    # ---------------------------------------------------- send a test message
+
+    async def async_step_send_test(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        hub = self._hub()
+        people = self._people_options()
+        if hub is None or not people:
+            return self.async_abort(reason="nobody_to_test")
+        if user_input is not None:
+            results = await hub.async_test(user_input["person"], user_input.get("how", TEST_ALL))
+            lines = []
+            for r in results:
+                if r["ok"]:
+                    lines.append(f"✅ {r['channel']}: sent")
+                else:
+                    lines.append(f"❌ {r['channel']}: {r['error']}")
+            self._test_report = "\n".join(lines)
+            return await self.async_step_test_result()
+        return self.async_show_form(
+            step_id="send_test",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("person", default=people[0]["value"]): SelectSelector(
+                        SelectSelectorConfig(options=people, mode=SelectSelectorMode.DROPDOWN)
+                    ),
+                    vol.Required("how", default=TEST_ALL): SelectSelector(
+                        SelectSelectorConfig(options=[TEST_ALL, TEST_APP, TEST_MESSAGING], translation_key="test_how", mode=SelectSelectorMode.LIST)
+                    ),
+                }
+            ),
+        )
+
+    async def async_step_test_result(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if user_input is not None:
+            return await self.async_step_init()
+        return self.async_show_form(
+            step_id="test_result",
+            data_schema=vol.Schema({}),
+            description_placeholders={"report": getattr(self, "_test_report", "")},
+        )
 
     # ------------------------------------------------ HouseCall-only people
 

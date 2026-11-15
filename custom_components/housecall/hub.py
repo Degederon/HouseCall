@@ -18,6 +18,8 @@ from homeassistant.util import dt as dt_util, slugify
 from .const import (
     ACK_PREFIX,
     CONF_BOARD_SERVICE,
+    CONF_CHANNEL_MODE,
+    CONF_CHANNELS,
     CONF_CUSTOM_PEOPLE,
     CONF_GLASS_BOARD,
     CONF_MAX_REPEATS,
@@ -28,6 +30,11 @@ from .const import (
     CONF_REPEAT_MINUTES,
     CONF_SPEAKERS,
     CONF_TTS,
+    CHANNEL_ALL,
+    CHANNEL_CRITICAL,
+    CHANNEL_NEVER,
+    CHANNEL_NO_APP,
+    DEFAULT_CHANNEL_MODE,
     DEFAULT_MAX_REPEATS,
     DEFAULT_QUIET_END,
     DEFAULT_QUIET_START,
@@ -48,6 +55,9 @@ from .const import (
     STATUS_WAITING,
     STORAGE_KEY,
     STORAGE_VERSION,
+    TEST_ALL,
+    TEST_APP,
+    TEST_MESSAGING,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -56,6 +66,24 @@ _LOGGER = logging.getLogger(__name__)
 def notify_services(hass: HomeAssistant) -> list[str]:
     """All legacy notify services, e.g. ['mobile_app_my_iphone', 'notify']."""
     return sorted(hass.services.async_services().get("notify", {}).keys())
+
+
+def messaging_routes(hass: HomeAssistant) -> dict[str, str]:
+    """Every way Home Assistant can send a message except the Companion app.
+
+    Returns {route: label}. A route is a notify entity (Telegram bot chats,
+    ntfy topics, Pushover, Whatsigram...) or a notify action (Signal, email...).
+    """
+    routes: dict[str, str] = {}
+    for state in hass.states.async_all("notify"):
+        routes[state.entity_id] = f"{state.attributes.get('friendly_name') or state.entity_id} ({state.entity_id})"
+    skip = {"notify", "send_message", "persistent_notification"}
+    for svc in notify_services(hass):
+        route = f"notify.{svc}"
+        if svc in skip or svc.startswith("mobile_app_") or route in routes:
+            continue
+        routes[route] = f"{route} (action)"
+    return dict(sorted(routes.items(), key=lambda kv: kv[1].lower()))
 
 
 def list_dashboards(hass: HomeAssistant) -> list[str]:
@@ -170,6 +198,7 @@ class HouseCall:
                     "home": bool(state and state.state == "home"),
                     "user_id": state.attributes.get("user_id") if state else None,
                     "custom": False,
+                    **self._channels_for(pid),
                 }
             )
         # People created only in HouseCall.
@@ -184,9 +213,14 @@ class HouseCall:
                     "home": (pstate.state in ("home", "on")) if pstate else None,
                     "user_id": None,
                     "custom": True,
+                    **self._channels_for(cid),
                 }
             )
         return result
+
+    def _channels_for(self, pid: str) -> dict[str, Any]:
+        info = (self.opts.get(CONF_CHANNELS) or {}).get(pid) or {}
+        return {"routes": list(info.get("routes") or []), "address": (info.get("address") or "").strip()}
 
     def _name(self, pid: str) -> str:
         for p in self.people():
@@ -286,13 +320,17 @@ class HouseCall:
         if what not in item["via"]:
             item["via"].append(what)
 
-    async def _call(self, domain: str, service: str, data: dict[str, Any], target: dict | None = None) -> bool:
+    async def _try(self, domain: str, service: str, data: dict[str, Any], target: dict | None = None) -> str | None:
+        """Call an action. Returns None on success, or what went wrong."""
         try:
             await self.hass.services.async_call(domain, service, data, target=target, blocking=True)
-            return True
+            return None
         except Exception as err:  # noqa: BLE001 - one bad device must not stop the rest
             _LOGGER.warning("HouseCall: %s.%s failed: %s", domain, service, err)
-            return False
+            return str(err) or err.__class__.__name__
+
+    async def _call(self, domain: str, service: str, data: dict[str, Any], target: dict | None = None) -> bool:
+        return await self._try(domain, service, data, target) is None
 
     def _services_for(self, pids: list[str]) -> list[str]:
         out: list[str] = []
@@ -310,7 +348,7 @@ class HouseCall:
         # Never set: use the starter dashboard if it exists.
         return f"/{STARTER_DASHBOARD}" if STARTER_DASHBOARD in list_dashboards(self.hass) else ""
 
-    async def _push(self, item: dict[str, Any], critical: bool) -> None:
+    async def _push(self, item: dict[str, Any], critical: bool, messaging: bool = True) -> None:
         title = item.get("title") or ("Critical alert" if critical else "Home")
         url = self.open_url()
         for svc in self._services_for(item["to"]):
@@ -342,6 +380,81 @@ class HouseCall:
                 payload["data"] = data
             if await self._call("notify", svc, payload):
                 self._add_via(item, "phone")
+        if messaging:
+            await self._messaging(item, critical)
+
+    # ------------------------------------------------------- messaging apps
+
+    def _wants_messaging(self, person: dict[str, Any], critical: bool) -> bool:
+        mode = self.opts.get(CONF_CHANNEL_MODE, DEFAULT_CHANNEL_MODE)
+        has_app = any(s.startswith("mobile_app_") for s in person.get("services", []))
+        if mode == CHANNEL_NEVER:
+            return False
+        if mode == CHANNEL_ALL:
+            return True
+        if mode == CHANNEL_NO_APP:
+            return not has_app
+        # CHANNEL_CRITICAL: critical alerts for everyone, everything for people without the app
+        return critical or not has_app
+
+    @staticmethod
+    def _messaging_text(item: dict[str, Any], critical: bool) -> str:
+        title = item.get("title")
+        text = f"{title}: {item['message']}" if title else item["message"]
+        return f"URGENT: {text}" if critical else text
+
+    async def _send_route(self, route: str, address: str, text: str) -> str | None:
+        if not route.startswith("notify."):
+            return f"Unknown route {route}"
+        if self.hass.states.get(route) is not None:
+            # A notify entity, e.g. a Telegram bot chat, ntfy topic or Whatsigram recipient.
+            return await self._try("notify", "send_message", {"message": text}, target={"entity_id": route})
+        service = route.split(".", 1)[1]
+        if not self.hass.services.has_service("notify", service):
+            return f"{route} doesn't exist (any more)"
+        data: dict[str, Any] = {"message": text}
+        if address:
+            data["target"] = [address]
+        return await self._try("notify", service, data)
+
+    async def _messaging(self, item: dict[str, Any], critical: bool) -> None:
+        people = {p["id"]: p for p in self.people()}
+        text = self._messaging_text(item, critical)
+        for pid in item["to"]:
+            person = people.get(pid)
+            if not person or not person.get("routes") or not self._wants_messaging(person, critical):
+                continue
+            for route in person["routes"]:
+                if await self._send_route(route, person.get("address", ""), text) is None:
+                    self._add_via(item, "messaging")
+
+    async def async_test(self, pid: str, how: str = TEST_ALL) -> list[dict[str, Any]]:
+        """Send a test to one person and report every way it was tried."""
+        person = next((p for p in self.people() if p["id"] == pid), None)
+        if person is None:
+            return [{"channel": pid, "ok": False, "error": "Nobody with that name or id in HouseCall"}]
+        text = f"HouseCall test for {person['name']}. If you can read this, it works."
+        results: list[dict[str, Any]] = []
+        if how in (TEST_ALL, TEST_APP):
+            for svc in person["services"]:
+                err = await self._try("notify", svc, {"message": text, "title": "HouseCall test"})
+                results.append({"channel": f"Phone app ({svc})", "ok": err is None, "error": err})
+        if how in (TEST_ALL, TEST_MESSAGING):
+            labels = messaging_routes(self.hass)
+            for route in person["routes"]:
+                err = await self._send_route(route, person.get("address", ""), text)
+                results.append({"channel": labels.get(route, route), "ok": err is None, "error": err})
+        if not results:
+            what = {TEST_APP: "no phone app", TEST_MESSAGING: "no messaging apps"}.get(how, "no phone app or messaging apps")
+            results.append({"channel": person["name"], "ok": False, "error": f"{person['name']} has {what} set up in HouseCall"})
+        return results
+
+    def resolve_one(self, who: str) -> str | None:
+        t = (who or "").strip().lower()
+        for p in self.people():
+            if t in (p["id"].lower(), p["id"].split(".", 1)[-1].lower(), p["name"].lower()):
+                return p["id"]
+        return None
 
     async def _speak(self, item: dict[str, Any]) -> None:
         tts = self.opts.get(CONF_TTS)
@@ -404,7 +517,7 @@ class HouseCall:
             await self._changed()
             return
         item["repeats"] += 1
-        await self._push(item, critical=True)
+        await self._push(item, critical=True, messaging=False)
         await self._speak(item)
         self._schedule_repeat(item_id)
         await self._changed()

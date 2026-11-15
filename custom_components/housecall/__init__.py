@@ -14,7 +14,7 @@ from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, Supp
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 
-from .const import CARD_FILENAME, CARD_URL, DOMAIN, PRIORITIES, PRIORITY_NORMAL, VERSION
+from .const import CARD_FILENAME, CARD_URL, DOMAIN, PRIORITIES, PRIORITY_NORMAL, TEST_ALL, TEST_APP, TEST_MESSAGING, VERSION
 from .hub import HouseCall
 
 PLATFORMS = [Platform.SENSOR]
@@ -26,6 +26,12 @@ SEND_SCHEMA = vol.Schema(
         vol.Optional("title"): cv.string,
         vol.Optional("to"): vol.Any(cv.string, [cv.string]),
         vol.Optional("priority", default=PRIORITY_NORMAL): vol.In(PRIORITIES),
+    }
+)
+TEST_SCHEMA = vol.Schema(
+    {
+        vol.Required("to"): cv.string,
+        vol.Optional("how", default=TEST_ALL): vol.In([TEST_ALL, TEST_APP, TEST_MESSAGING]),
     }
 )
 ACK_SCHEMA = vol.Schema({vol.Required("id"): cv.string, vol.Optional("by"): cv.string})
@@ -68,11 +74,22 @@ def _register_services(hass: HomeAssistant) -> None:
     async def clear_history(call: ServiceCall) -> None:
         await _hub(hass).async_clear()
 
+    async def send_test(call: ServiceCall) -> ServiceResponse:
+        hub = _hub(hass)
+        pid = hub.resolve_one(call.data["to"])
+        if pid is None:
+            raise HomeAssistantError(f"Nobody called {call.data['to']} in HouseCall")
+        results = await hub.async_test(pid, call.data.get("how", TEST_ALL))
+        return {"results": results, "all_ok": all(r["ok"] for r in results)}
+
     hass.services.async_register(
         DOMAIN, "send", send, schema=SEND_SCHEMA, supports_response=SupportsResponse.OPTIONAL
     )
     hass.services.async_register(DOMAIN, "acknowledge", acknowledge, schema=ACK_SCHEMA)
     hass.services.async_register(DOMAIN, "clear_history", clear_history)
+    hass.services.async_register(
+        DOMAIN, "send_test", send_test, schema=TEST_SCHEMA, supports_response=SupportsResponse.OPTIONAL
+    )
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -97,6 +114,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if ok:
         await entry.runtime_data.async_stop()
         hass.data.pop(DOMAIN, None)
-        for svc in ("send", "acknowledge", "clear_history"):
+        for svc in ("send", "acknowledge", "clear_history", "send_test"):
             hass.services.async_remove(DOMAIN, svc)
     return ok

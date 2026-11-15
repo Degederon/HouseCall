@@ -18,6 +18,8 @@
           "people": "People from Home Assistant: show or hide",
           "add_person": "Add a HouseCall-only person",
           "edit_person": "Change or remove a HouseCall-only person",
+          "messaging": "Messaging apps (Telegram, Signal, WhatsApp, ntfy…)",
+          "send_test": "Send a test message",
           "quiet": "Quiet hours",
           "outputs": "Phones, speakers, Glass Message Board and repeats"
         }
@@ -77,10 +79,41 @@
           "presence": "Shows whether they're home (optional)",
           "remove": "Remove this person from HouseCall"
         }
+      },
+      "messaging": {
+        "title": "Messaging apps",
+        "description": "HouseCall can also send through any messaging app you've connected to Home Assistant, such as Telegram bot, Signal Messenger, ntfy, Pushover or Whatsigram (WhatsApp).\n\nFound in your Home Assistant:\n{found}\n\nChoose when to use them, and pick a person to set up their apps.",
+        "data": {
+          "channel_mode": "When to use messaging apps",
+          "person": "Set up messaging apps for (optional)"
+        }
+      },
+      "messaging_person": {
+        "title": "Messaging apps for {name}",
+        "description": "Tick the apps that reach {name}. A Telegram bot chat or WhatsApp recipient already knows who it is. For apps that need it, such as Signal, type their number with the country code (for example +15551234567).",
+        "data": {
+          "routes": "Send through",
+          "address": "Their number or chat ID (only if an app needs one)"
+        }
+      },
+      "send_test": {
+        "title": "Send a test message",
+        "description": "Sends a short test message now and shows what worked. Nothing is added to the message history.",
+        "data": {
+          "person": "Send to",
+          "how": "Send through"
+        }
+      },
+      "test_result": {
+        "title": "Test results",
+        "description": "{report}\n\nPress Submit to go back to the settings."
       }
     },
     "error": {
       "name_required": "Please type a name."
+    },
+    "abort": {
+      "nobody_to_test": "There's nobody in HouseCall to send a test to yet. Add people first."
     }
   },
   "services": {
@@ -123,6 +156,20 @@
     "clear_history": {
       "name": "Clear history",
       "description": "Remove all messages from the Hub."
+    },
+    "send_test": {
+      "name": "Send test message",
+      "description": "Send a test message to one person and get back what worked.",
+      "fields": {
+        "to": {
+          "name": "To",
+          "description": "A name (Jay, Grandma) or person (person.jay)."
+        },
+        "how": {
+          "name": "Send through",
+          "description": "all, app or messaging."
+        }
+      }
     }
   },
   "selector": {
@@ -131,6 +178,21 @@
         "info": "Info",
         "normal": "Normal",
         "critical": "Critical"
+      }
+    },
+    "channel_mode": {
+      "options": {
+        "critical": "Critical alerts for everyone, and everything for people without the Home Assistant app (recommended)",
+        "all": "Every Normal and Critical message",
+        "no_app": "Only for people without the Home Assistant app",
+        "never": "Never"
+      }
+    },
+    "test_how": {
+      "options": {
+        "all": "Everything they have",
+        "app": "Home Assistant app only",
+        "messaging": "Messaging apps only"
       }
     }
   }
