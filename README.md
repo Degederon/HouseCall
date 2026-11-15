@@ -492,6 +492,7 @@ max_items: 20             # how many messages to show
 |---|---|
 | A red **Configuration error** box instead of the card | Check **HouseCall** is listed under **Settings → Devices & services** (if not, do [Step 2](#step-2-add-housecall-to-home-assistant)). Then restart Home Assistant and hard-refresh the browser (**Ctrl + Shift + R**, or **Reset frontend cache** in the phone app). |
 | The card looks old after an update | Restart Home Assistant and hard-refresh the browser. |
+| A settings screen shows an error like `MISSING_VALUE`, `{found}`, or plain words like *enabled* and *telegram* | The browser is still showing the previous version's wording. Hard-refresh the page (**Ctrl + Shift + R**, or **Reset frontend cache** in the phone app) and open the screen again. |
 | A person shows **0 phones** | Pick their phone under **Configure → People from Home Assistant: show or hide**, or under **Settings → People → Track device**. |
 | Alarms aren't loud on iPhone | Allow **Critical Alerts** for the Home Assistant app in iPhone **Settings → Notifications → Home Assistant**. |
 | Alarms aren't loud on Android | In the Home Assistant app: **Settings → Companion app → Notification channels → alarm_stream**, and allow sound. |
