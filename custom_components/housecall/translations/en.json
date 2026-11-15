@@ -124,7 +124,7 @@
       },
       "setup_telegram": {
         "title": "Set up Telegram (free)",
-        "description": "HouseCall sends Telegram messages through a bot of its own. Making one takes 2 minutes:\n\n1. In Telegram, search for **@BotFather** and open it.\n2. Send **/newbot**.\n3. Type a name, such as *Our House*, then a username ending in *bot*, such as *OurHouseCallBot*.\n4. BotFather replies with a **token** (a long code like `123456:ABC-DEF…`). Copy it and paste it below.\n\nUse a new bot just for HouseCall, not one that Home Assistant's Telegram bot integration already uses.\n\nNeed help? [Telegram guide with pictures]({help})",
+        "description": "HouseCall sends Telegram messages through a bot of its own. Making one takes 2 minutes:\n\n1. In Telegram, search for **@BotFather** and open it.\n2. Send **/newbot**.\n3. Type a name, such as *Our House*, then a username ending in *bot*, such as *OurHouseCallBot*.\n4. BotFather replies with a **token** (a long code like `123456:ABC-DEF…`). Copy it and paste it below.\n\nUse a new bot just for HouseCall, not one that Home Assistant's Telegram bot integration already uses.\n\nNeed help? [Telegram guide]({help})",
         "data": {
           "token": "Bot token from BotFather"
         }

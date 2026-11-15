@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [2.0.1] - 2026-11-14
+
+### Fixed
+
+- The Telegram setup page's help link no longer promises pictures. The guide is written steps.
+
 ## [2.0.0] - 2026-11-14
 
 ### Added
