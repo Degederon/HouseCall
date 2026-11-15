@@ -297,6 +297,69 @@ If their name isn't in the list yet, close the settings window, wait a few secon
 
 Alarms arrive with an **I'm on it** button. Tapping it works just like the button in the Home Assistant app.
 
+#### Example: Christopher on Telegram
+
+Christopher doesn't use the Home Assistant app, so the family reaches him on Telegram.
+
+**1. Make the bot (once).** In Telegram, BotFather gives you a token for a new bot called *OurHouseCallBot*. Paste it on HouseCall's **Set up Telegram** page.
+
+**2. Christopher connects (once, on his phone).** He searches for *@OurHouseCallBot*, opens it, and taps **Start**. The bot answers right away:
+
+```text
+Christopher:  /start
+Bot:          Hi Christopher! This chat is now connected to HouseCall.
+              Ask whoever runs your Home Assistant to pick your name
+              for Telegram in HouseCall.
+```
+
+**3. You link his chat (once).** **Configure → Messaging services → Then set up messaging for → Christopher**. In **Telegram chat**, pick *Christopher (123456789)* and select **Submit**. The chat appears under his Telegram name, which might not match his name in Home Assistant.
+
+**4. Check it.** In **Settings → Developer tools → Actions**, switch to YAML mode, paste this and select **Perform action**:
+
+```yaml
+action: housecall.send_test
+data:
+  to: Christopher
+  how: messaging
+```
+
+The response shows it worked:
+
+```yaml
+results:
+  - channel: Telegram
+    ok: true
+all_ok: true
+```
+
+**5. Use it.** Send to him like anyone else, from the card or an automation:
+
+```yaml
+- action: housecall.send
+  data:
+    message: Your package was delivered
+    to: Christopher
+```
+
+He gets it in his chat with the bot:
+
+```text
+Bot:  Your package was delivered
+```
+
+An alarm arrives with a button underneath:
+
+```text
+Bot:  URGENT: Water under the kitchen sink!
+      [ I'm on it ]
+```
+
+When he taps **I'm on it**, the alarm stops for everyone, the card shows **Handled by Christopher**, and the bot confirms in his chat:
+
+```text
+Bot:  Handled by Christopher.
+```
+
 ### ntfy
 
 **Once, for the house:** tick **ntfy** and keep the server as `https://ntfy.sh`. There's no account to create.
