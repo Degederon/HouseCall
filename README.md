@@ -8,7 +8,7 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.11%2B-18BCF2.svg?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
-[![Version](https://img.shields.io/badge/version-2.1.0-6E56CF.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.1.1-6E56CF.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
@@ -357,7 +357,7 @@ In the automation editor, add the action **HouseCall: Send**. You only need thre
 - action: housecall.send
   data:
     message: Water under the kitchen sink!
-    to: everyone          # or a name: Jay, Grandma, or a list
+    to: everyone          # or a name (Jay, Grandma), a list, or me
     priority: critical    # info | normal | critical
 ```
 
@@ -444,9 +444,9 @@ actions:
 
 | Action | What it does | Fields |
 |---|---|---|
-| `housecall.send` | Sends a message. | `message` (required), `to`, `priority`, `title` |
+| `housecall.send` | Sends a message. `to` can be a name, a list, `everyone`, or `me` (whoever pressed the button). | `message` (required), `to`, `priority`, `title` |
 | `housecall.acknowledge` | Marks an alarm as handled and stops it. | `id` (required), `by` |
-| `housecall.send_test` | Sends a test to one person and reports what worked. | `to` (required), `how`: `all`, `app` or `messaging` |
+| `housecall.send_test` | Sends a test to one person and reports what worked. `to: me` tests whoever pressed the button. | `to` (required), `how`: `all`, `app` or `messaging` |
 | `housecall.clear_history` | Removes every message. | none |
 
 ### Entity and events
@@ -488,6 +488,7 @@ max_items: 20             # how many messages to show
 | The Telegram **I'm on it** button does nothing | Another program uses the same bot. Make a new bot just for HouseCall and paste its token under **Configure → Messaging services**. |
 | Email says the password was refused | Use an **app password**, not your normal password. See [Email](#email). |
 | A test shows ❌ for a messaging service | Read the reason next to it. It explains what to fix in plain words. |
+| A button says **Nobody called … in HouseCall** | Use a name that's in HouseCall (the message lists them), or `me`. For `me` to work, your login must be linked to your person under **Settings → People**. |
 | An alarm says **Nobody answered** | Nobody tapped **I'm on it** before the last repeat, or Home Assistant restarted. |
 
 Still stuck? Go to **Settings → System → Logs**, search for `housecall`, and include what you find when you [report a problem](https://github.com/Degederon/HouseCall/issues).

@@ -65,6 +65,7 @@ def _register_services(hass: HomeAssistant) -> None:
             call.data.get("title"),
             call.data.get("to"),
             call.data.get("priority", PRIORITY_NORMAL),
+            call.context.user_id,
         )
         return {"id": item["id"], "status": item["status"], "to": item["to_label"]}
 
@@ -76,9 +77,15 @@ def _register_services(hass: HomeAssistant) -> None:
 
     async def send_test(call: ServiceCall) -> ServiceResponse:
         hub = _hub(hass)
-        pid = hub.resolve_one(call.data["to"])
+        pid = hub.resolve_one(call.data["to"], call.context.user_id)
         if pid is None:
-            raise HomeAssistantError(f"Nobody called {call.data['to']} in HouseCall")
+            who = call.data["to"]
+            if who.strip().lower() in ("me", "myself", "i"):
+                raise HomeAssistantError(
+                    f"HouseCall doesn't know who \"Me\" is for this login. Link your user to your person under "
+                    f"Settings → People, or use a name instead. Names in HouseCall: {hub.names()}"
+                )
+            raise HomeAssistantError(f"Nobody called {who} in HouseCall. Names in HouseCall: {hub.names()}")
         results = await hub.async_test(pid, call.data.get("how", TEST_ALL))
         return {"results": results, "all_ok": all(r["ok"] for r in results)}
 

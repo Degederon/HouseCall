@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2.1.1] - 2026-11-14
+
+### Fixed
+
+- **`to: me` now means whoever pressed the button.** The starter dashboard's test buttons work for everyone without editing. Before, they looked for someone called "Me".
+- When a name isn't found, the error now lists the names HouseCall knows.
+
 ## [2.1.0] - 2026-11-14
 
 ### Removed

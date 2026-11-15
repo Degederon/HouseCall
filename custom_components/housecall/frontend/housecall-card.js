@@ -1,6 +1,6 @@
 /* HouseCall card — glass-style feed + composer for Home Assistant. */
 (() => {
-  const VERSION = "2.1.0";
+  const VERSION = "2.1.1";
 
   const PRIO = {
     info: { label: "Info", color: "#5EE6FF", tint: "rgba(94,230,255,0.14)", glow: "rgba(94,230,255,0.45)" },

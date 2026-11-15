@@ -251,7 +251,7 @@ class HouseCall:
                 return p["name"]
         return pid
 
-    def _resolve_to(self, to: Any) -> list[str]:
+    def _resolve_to(self, to: Any, user_id: str | None = None) -> list[str]:
         everyone = [p["id"] for p in self.people()]
         if not to:
             return everyone
@@ -264,10 +264,9 @@ class HouseCall:
                 continue
             if t in EVERYONE:
                 return everyone
-            for p in self.people():
-                if t in (p["id"].lower(), p["id"].split(".", 1)[-1].lower(), p["name"].lower()):
-                    if p["id"] not in wanted:
-                        wanted.append(p["id"])
+            pid = self.resolve_one(t, user_id)
+            if pid and pid not in wanted:
+                wanted.append(pid)
         if not wanted:
             _LOGGER.warning("HouseCall: nobody matched %s, sending to everyone", to)
             return everyone
@@ -303,8 +302,9 @@ class HouseCall:
         title: str | None = None,
         to: Any = None,
         priority: str = PRIORITY_NORMAL,
+        user_id: str | None = None,
     ) -> dict[str, Any]:
-        pids = self._resolve_to(to)
+        pids = self._resolve_to(to, user_id)
         item: dict[str, Any] = {
             "id": uuid4().hex[:10],
             "message": message,
@@ -553,12 +553,20 @@ class HouseCall:
             results.append({"channel": person["name"], "ok": False, "error": f"{person['name']} has {what} set up in HouseCall"})
         return results
 
-    def resolve_one(self, who: str) -> str | None:
+    def resolve_one(self, who: str, user_id: str | None = None) -> str | None:
+        """Find one person by name or id. "Me" means whoever pressed the button."""
         t = (who or "").strip().lower()
         for p in self.people():
             if t in (p["id"].lower(), p["id"].split(".", 1)[-1].lower(), p["name"].lower()):
                 return p["id"]
+        if t in ("me", "myself", "i") and user_id:
+            for p in self.people():
+                if p.get("user_id") == user_id:
+                    return p["id"]
         return None
+
+    def names(self) -> str:
+        return ", ".join(p["name"] for p in self.people()) or "nobody yet"
 
     async def _speak(self, item: dict[str, Any]) -> None:
         tts = self.opts.get(CONF_TTS)

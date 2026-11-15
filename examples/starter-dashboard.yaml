@@ -8,7 +8,7 @@
 #
 # Everything uses HouseCall plus Home Assistant's own cards. Change the quick
 # messages to suit your house: the words, who they go to, and how urgent.
-# The test buttons go to "Me": change that to your own name in HouseCall.
+# The test buttons go to "me", which means whoever presses the button.
 
 title: HouseCall
 views:
@@ -140,7 +140,7 @@ views:
               perform_action: housecall.send
               data:
                 message: "HouseCall test: normal message."
-                to: Me              # change to your name in HouseCall
+                to: me              # "me" = whoever presses the button
                 priority: normal
 
           - type: button
@@ -154,7 +154,7 @@ views:
               perform_action: housecall.send
               data:
                 message: "HouseCall test: critical alert. Tap I'm on it to stop it."
-                to: Me              # change to your name in HouseCall
+                to: me              # "me" = whoever presses the button
                 priority: critical
               confirmation:
                 text: >-
@@ -171,7 +171,7 @@ views:
               action: perform-action
               perform_action: housecall.send_test
               data:
-                to: Me              # change to a name, such as Grandma
+                to: me              # or a name, such as Grandma
                 how: messaging
 
           - type: button
