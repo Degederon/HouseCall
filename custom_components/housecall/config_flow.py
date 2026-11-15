@@ -137,7 +137,7 @@ class HouseCallOptionsFlow(OptionsFlow):
                 s not in (services_opt.get("enabled") or []) or not services_opt.get(s)
             )]
             return await self._next_step()
-        enabled = list(services_opt.get("enabled") or [])
+        enabled = [s for s in (services_opt.get("enabled") or []) if s in svcs.SERVICES]
         schema: dict[Any, Any] = {
             vol.Optional("enabled", default=enabled): SelectSelector(
                 SelectSelectorConfig(options=svcs.SERVICES, multiple=True, translation_key="service", mode=SelectSelectorMode.LIST)
@@ -297,7 +297,7 @@ class HouseCallOptionsFlow(OptionsFlow):
     async def async_step_messaging_person(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         pid = self._editing
         name = self._person_name(pid)
-        enabled = list((self._new.get(CONF_SERVICES) or {}).get("enabled") or [])
+        enabled = [s for s in ((self._new.get(CONF_SERVICES) or {}).get("enabled") or []) if s in svcs.SERVICES]
         all_svc = dict(self.config_entry.options.get(CONF_PERSON_SERVICES) or {})
         cur = dict(all_svc.get(pid) or {})
         current_routes = ((self.config_entry.options.get(CONF_CHANNELS) or {}).get(pid) or {}).get("routes") or []
@@ -318,11 +318,8 @@ class HouseCallOptionsFlow(OptionsFlow):
                     new["ntfy"] = ""
             if svcs.EMAIL in enabled:
                 new["email"] = (user_input.get("email") or "").strip()
-            if svcs.WHATSAPP in enabled:
-                new["whatsapp_phone"] = (user_input.get("whatsapp_phone") or "").strip()
-                new["whatsapp_key"] = (user_input.get("whatsapp_key") or "").strip()
-            if svcs.MESSENGER in enabled:
-                new["messenger_key"] = (user_input.get("messenger_key") or "").strip()
+            for old_key in ("whatsapp_phone", "whatsapp_key", "messenger_key"):
+                new.pop(old_key, None)  # no longer supported
             if svcs.CHAT in enabled:
                 new["chat"] = bool(user_input.get("chat"))
             new = {k: v for k, v in new.items() if v}
@@ -354,11 +351,6 @@ class HouseCallOptionsFlow(OptionsFlow):
             schema[vol.Optional("ntfy", default=bool(cur.get("ntfy")))] = BooleanSelector()
         if svcs.EMAIL in enabled:
             schema[vol.Optional("email", description={"suggested_value": cur.get("email", "")})] = TextSelector()
-        if svcs.WHATSAPP in enabled:
-            schema[vol.Optional("whatsapp_phone", description={"suggested_value": cur.get("whatsapp_phone", "")})] = TextSelector()
-            schema[vol.Optional("whatsapp_key", description={"suggested_value": cur.get("whatsapp_key", "")})] = TextSelector()
-        if svcs.MESSENGER in enabled:
-            schema[vol.Optional("messenger_key", description={"suggested_value": cur.get("messenger_key", "")})] = TextSelector()
         if svcs.CHAT in enabled:
             schema[vol.Optional("chat", default=bool(cur.get("chat")))] = BooleanSelector()
         if found or current_routes:

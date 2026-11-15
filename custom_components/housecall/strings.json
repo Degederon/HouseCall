@@ -18,7 +18,7 @@
           "people": "People from Home Assistant: show or hide",
           "add_person": "Add a HouseCall-only person",
           "edit_person": "Change or remove a HouseCall-only person",
-          "messaging": "Messaging services (Telegram, ntfy, email, WhatsApp…)",
+          "messaging": "Messaging services (Telegram, ntfy, email, Discord/Slack)",
           "send_test": "Send a test message",
           "quiet": "Quiet hours",
           "outputs": "Phones, speakers, Glass Message Board and repeats"
@@ -94,14 +94,11 @@
       },
       "messaging_person": {
         "title": "How to reach {name}",
-        "description": "Fill in only what {name} uses. Leave the rest empty.\n\n**Telegram:** {name} opens {bot} in Telegram and taps **Start**. Then close this window, open it again, and pick their name from the list.\n**ntfy:** switch on, and the next page shows the channel {name} subscribes to.\n**WhatsApp / Messenger:** {name} first gets a free personal key from CallMeBot on their own phone (see the guide). CallMeBot is a free outside service and may sometimes be slow.\n\nNeed help? [Guide]({help})",
+        "description": "Fill in only what {name} uses. Leave the rest empty.\n\n**Telegram:** {name} opens {bot} in Telegram and taps **Start**. Then close this window, open it again, and pick their name from the list.\n**ntfy:** switch on, and the next page shows the channel {name} subscribes to.\n\nNeed help? [Guide]({help})",
         "data": {
           "telegram": "Telegram chat",
           "ntfy": "Use ntfy",
           "email": "Email address(es), separated by commas",
-          "whatsapp_phone": "WhatsApp number with country code (+15551234567)",
-          "whatsapp_key": "WhatsApp CallMeBot key",
-          "messenger_key": "Messenger CallMeBot key",
           "chat": "Also post their messages in the family channel",
           "routes": "Other apps already in Home Assistant (advanced)"
         }
@@ -120,7 +117,7 @@
       },
       "messaging_addresses": {
         "title": "Where to reach {name}",
-        "description": "For each app, type how it reaches {name}:\n- Signal, Facebook Messenger, SMS: their number with the country code, such as +15551234567\n- Email: their email address\n- Discord, Slack, Matrix: the channel or room\n- Threema: their Threema ID\n\nLeave a box empty if that app already knows who to send to. Separate several with commas."
+        "description": "For each app, type how it reaches {name}:\n- Signal, SMS: their number with the country code, such as +15551234567\n- Email: their email address\n- Discord, Slack, Matrix: the channel or room\n- Threema: their Threema ID\n\nLeave a box empty if that app already knows who to send to. Separate several with commas."
       },
       "setup_telegram": {
         "title": "Set up Telegram (free)",
@@ -253,8 +250,6 @@
         "telegram": "Telegram: free, recommended. I'm on it button right in the chat.",
         "ntfy": "ntfy: free app, no account needed.",
         "email": "Email: from your own email account.",
-        "whatsapp": "WhatsApp: through the free CallMeBot service (personal use).",
-        "messenger": "Facebook Messenger: through the free CallMeBot service (personal use).",
         "chat": "Discord or Slack: post in a family channel."
       }
     },

@@ -8,7 +8,7 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.11%2B-18BCF2.svg?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
-[![Version](https://img.shields.io/badge/version-2.0.2-6E56CF.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.1.0-6E56CF.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
@@ -33,7 +33,7 @@ It matches the look of [Glass Message Board](https://github.com/Degederon/GlassM
 6. [Everyday use](#everyday-use)
 7. [Change settings](#change-settings)
 8. [Reach people who don't use the Home Assistant app](#reach-people-who-dont-use-the-home-assistant-app) (optional)
-   - [Messaging services: Telegram, ntfy, email, WhatsApp, Messenger, Discord/Slack](#messaging-services)
+   - [Messaging services: Telegram, ntfy, email, Discord/Slack](#messaging-services)
 9. [Send a test message](#send-a-test-message)
 10. [Use HouseCall in automations](#use-housecall-in-automations)
 11. [Card options](#card-options)
@@ -49,7 +49,7 @@ It matches the look of [Glass Message Board](https://github.com/Degederon/GlassM
 | **"I'm on it"** | One tap stops the alarm on everyone's phone and tells the others who's handling it. |
 | **Speakers** | Alarms are read aloud on the speakers you choose. |
 | **Glass Message Board** | Every message also appears as a note on your board. |
-| **Messaging services** | Optionally reach people on Telegram, ntfy, email, WhatsApp, Messenger or a Discord/Slack channel. Built in and free, nothing else to install. |
+| **Messaging services** | Optionally reach people on Telegram, ntfy, email or a Discord/Slack channel. Built in and free, nothing else to install. |
 | **Send a test message** | Check that someone can be reached, without a real alarm. |
 | **Frosted-glass card** | Today's messages, who's home, and a message box, all in one card. |
 | **No YAML** | Everything is set up from the Home Assistant screens. |
@@ -192,7 +192,7 @@ All settings are in one place: **Settings → Devices & services → HouseCall �
 | **People from Home Assistant: show or hide** | Who appears in HouseCall, and their phones. |
 | **Add a HouseCall-only person** | Add someone who isn't in Home Assistant, such as Grandma. |
 | **Change or remove a HouseCall-only person** | Edit or delete them. |
-| **Messaging services** | Telegram, ntfy, email, WhatsApp, Messenger, Discord/Slack. [Details](#messaging-services). |
+| **Messaging services** | Telegram, ntfy, email, Discord/Slack. [Details](#messaging-services). |
 | **Send a test message** | Check how someone can be reached. [Details](#send-a-test-message). |
 | **Quiet hours** | When Normal messages wait. Default: 10 PM to 7 AM. |
 | **Phones, speakers, Glass Message Board and repeats** | Which page opens when a notification is tapped, speakers and voice for alarms, posting to Glass Message Board, and how often alarms repeat. |
@@ -248,11 +248,9 @@ HouseCall has these services built in. All of them are free. You only switch on 
 | **Telegram** ⭐ recommended | Everyone. Alarms come with an **I'm on it** button right in the chat. | The free Telegram app. |
 | **ntfy** | People who want a simple alerts app with no account. | The free ntfy app. |
 | **Email** | Anyone with an email address. | Nothing. |
-| **WhatsApp** | People who only use WhatsApp. | WhatsApp, plus a free personal key from CallMeBot (one message, once). |
-| **Facebook Messenger** | People who only use Messenger. | Messenger, plus a free personal key from CallMeBot (one message, once). |
 | **Discord or Slack channel** | A family group chat. | To be in the channel. |
 
-WhatsApp and Messenger go through **CallMeBot**, a free outside service for personal use. WhatsApp and Facebook offer no free official way, so it may sometimes be slow or unavailable. Use it as an extra, not your only way to reach someone.
+**WhatsApp and Facebook Messenger aren't included.** Neither offers a free, official way for a home system to send messages: WhatsApp charges per message, and Messenger blocks messages to anyone who hasn't written to you in the last 24 hours.
 
 ### Switch services on: 3 steps
 
@@ -264,7 +262,7 @@ WhatsApp and Messenger go through **CallMeBot**, a free outside service for pers
 
 1. **Configure → Messaging services**. Leave the ticks as they are.
 2. Under **Then set up messaging for**, pick a person and select **Submit**.
-3. Fill in only what that person uses: their Telegram chat, ntfy, email address, WhatsApp or Messenger key, or the family channel. Select **Submit**.
+3. Fill in only what that person uses: their Telegram chat, ntfy, email address, or the family channel. Select **Submit**.
 4. Check it with [Send a test message](#send-a-test-message), choosing **Messaging apps only**.
 
 ### When messaging services are used
@@ -325,22 +323,6 @@ Keep the topic private: anyone who knows it can read the messages. Alarms arrive
 5. Select **Submit**. HouseCall signs in to check it works, without sending anything.
 
 **For each person:** type their email address. Separate several with commas.
-
-### WhatsApp
-
-WhatsApp uses the free CallMeBot service. **Each person** gets their own key once:
-
-1. On **their** phone, go to [callmebot.com's WhatsApp page](https://www.callmebot.com/blog/free-api-whatsapp-messages/) and follow its steps. They add CallMeBot's number to their contacts and send it the activation message shown there.
-2. CallMeBot replies with their **API key**.
-3. In HouseCall, set up messaging for that person. Type their WhatsApp number with country code (`+15551234567`) and the key.
-
-### Facebook Messenger
-
-Messenger also uses the free CallMeBot service. **Each person** gets their own key once:
-
-1. On **their** phone, go to [callmebot.com's Messenger page](https://www.callmebot.com/blog/facebook-messenger-free-api-home-assistant/) and follow its steps to send the activation message to CallMeBot in Messenger.
-2. CallMeBot replies with their **API key**.
-3. In HouseCall, set up messaging for that person and type the key.
 
 ### Discord or Slack channel
 
@@ -505,7 +487,6 @@ max_items: 20             # how many messages to show
 | A Telegram person isn't in the list | They need to open your bot and tap **Start** first. Then close the settings window and open it again. |
 | The Telegram **I'm on it** button does nothing | Another program uses the same bot. Make a new bot just for HouseCall and paste its token under **Configure → Messaging services**. |
 | Email says the password was refused | Use an **app password**, not your normal password. See [Email](#email). |
-| WhatsApp or Messenger messages don't arrive | Check the person's key and number, and that they activated CallMeBot from their own phone. CallMeBot is a free outside service and is sometimes slow. |
 | A test shows ❌ for a messaging service | Read the reason next to it. It explains what to fix in plain words. |
 | An alarm says **Nobody answered** | Nobody tapped **I'm on it** before the last repeat, or Home Assistant restarted. |
 

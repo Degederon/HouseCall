@@ -459,10 +459,6 @@ class HouseCall:
             out.append(svcs.NTFY)
         if self.service_enabled(svcs.EMAIL) and svc.get("email"):
             out.append(svcs.EMAIL)
-        if self.service_enabled(svcs.WHATSAPP) and svc.get("whatsapp_phone") and svc.get("whatsapp_key"):
-            out.append(svcs.WHATSAPP)
-        if self.service_enabled(svcs.MESSENGER) and svc.get("messenger_key"):
-            out.append(svcs.MESSENGER)
         if self.service_enabled(svcs.CHAT) and svc.get("chat"):
             out.append(svcs.CHAT)
         return out
@@ -487,10 +483,6 @@ class HouseCall:
                 to = [a.strip() for a in str(svc["email"]).split(",") if a.strip()]
                 subject = ("URGENT: " if priority == PRIORITY_CRITICAL else "") + "HouseCall"
                 await svcs.send_email(self.hass, self.service_cfg(svcs.EMAIL), to, subject, text)
-            elif name == svcs.WHATSAPP:
-                await svcs.send_whatsapp(self.hass, svc.get("whatsapp_phone", ""), svc.get("whatsapp_key", ""), text)
-            elif name == svcs.MESSENGER:
-                await svcs.send_messenger(self.hass, svc.get("messenger_key", ""), text)
             elif name == svcs.CHAT:
                 await svcs.send_chat(self.hass, self.service_cfg(svcs.CHAT).get("webhook", ""), text)
             else:
@@ -548,8 +540,7 @@ class HouseCall:
                 err = await self._try("notify", svc, {"message": text, "title": "HouseCall test"})
                 results.append({"channel": f"Phone app ({svc})", "ok": err is None, "error": err})
         if how in (TEST_ALL, TEST_MESSAGING):
-            names = {svcs.TELEGRAM: "Telegram", svcs.NTFY: "ntfy", svcs.EMAIL: "Email", svcs.WHATSAPP: "WhatsApp",
-                     svcs.MESSENGER: "Messenger", svcs.CHAT: "Family chat channel"}
+            names = {svcs.TELEGRAM: "Telegram", svcs.NTFY: "ntfy", svcs.EMAIL: "Email", svcs.CHAT: "Family chat channel"}
             for name in self.person_builtins(person):
                 err = await self._send_builtin(name, person, text, PRIORITY_NORMAL)
                 results.append({"channel": names[name], "ok": err is None, "error": err})

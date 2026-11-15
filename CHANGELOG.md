@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [2.1.0] - 2026-11-14
+
+### Removed
+
+- **WhatsApp and Facebook Messenger.** They depended on CallMeBot, an outside service. Neither WhatsApp nor Messenger offers a free, official way for a home system to send messages, so they're no longer part of HouseCall. Any WhatsApp or Messenger keys you entered are ignored and removed the next time you save that person.
+
 ## [2.0.2] - 2026-11-14
 
 ### Fixed

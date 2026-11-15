@@ -6,8 +6,6 @@ installed. All of them are free:
 - Telegram   (Telegram Bot API, with an "I'm on it" button)
 - ntfy       (ntfy.sh or your own ntfy server)
 - Email      (any email account, through SMTP)
-- WhatsApp   (the free CallMeBot service, personal use)
-- Messenger  (the free CallMeBot service, personal use)
 - Chat       (a Discord or Slack channel, through a webhook link)
 """
 
@@ -31,10 +29,8 @@ _LOGGER = logging.getLogger(__name__)
 TELEGRAM = "telegram"
 NTFY = "ntfy"
 EMAIL = "email"
-WHATSAPP = "whatsapp"
-MESSENGER = "messenger"
 CHAT = "chat"
-SERVICES = [TELEGRAM, NTFY, EMAIL, WHATSAPP, MESSENGER, CHAT]
+SERVICES = [TELEGRAM, NTFY, EMAIL, CHAT]
 
 # Services that need a one-time setup for the whole house.
 NEEDS_SETUP = [TELEGRAM, NTFY, EMAIL, CHAT]
@@ -44,8 +40,6 @@ HELP_LINKS = {
     TELEGRAM: HELP + "telegram",
     NTFY: HELP + "ntfy",
     EMAIL: HELP + "email",
-    WHATSAPP: HELP + "whatsapp",
-    MESSENGER: HELP + "facebook-messenger",
     CHAT: HELP + "discord-or-slack-channel",
 }
 
@@ -270,37 +264,6 @@ async def send_email(hass: HomeAssistant, cfg: dict[str, Any], to: list[str], su
 async def check_email(hass: HomeAssistant, cfg: dict[str, Any]) -> None:
     """Logs in without sending anything."""
     await hass.async_add_executor_job(_smtp_send, cfg, [], "", "")
-
-
-# ------------------------------------------------- WhatsApp and Messenger
-
-
-async def _callmebot(hass: HomeAssistant, url: str, params: dict[str, str]) -> None:
-    session = async_get_clientsession(hass)
-    try:
-        async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=30)) as resp:
-            body = (await resp.text())[:400]
-            if resp.status >= 400 or "APIKey is invalid" in body or "ERROR" in body.upper()[:200]:
-                raise SendError(
-                    "CallMeBot didn't accept it. Check the person's number and key, and that they activated "
-                    "CallMeBot from their own phone."
-                )
-    except asyncio.TimeoutError as err:
-        raise SendError("CallMeBot didn't answer in time. The free service is sometimes busy; it will try again next message.") from err
-    except aiohttp.ClientError as err:
-        raise SendError(f"Couldn't reach CallMeBot: {err}") from err
-
-
-async def send_whatsapp(hass: HomeAssistant, phone: str, apikey: str, text: str) -> None:
-    if not phone or not apikey:
-        raise SendError("WhatsApp needs both their phone number and their CallMeBot key")
-    await _callmebot(hass, "https://api.callmebot.com/whatsapp.php", {"phone": phone, "text": text, "apikey": apikey})
-
-
-async def send_messenger(hass: HomeAssistant, apikey: str, text: str) -> None:
-    if not apikey:
-        raise SendError("Messenger needs their CallMeBot key")
-    await _callmebot(hass, "https://api.callmebot.com/facebook/send.php", {"apikey": apikey, "text": text})
 
 
 # --------------------------------------------- Discord or Slack channel
