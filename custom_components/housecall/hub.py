@@ -422,8 +422,6 @@ class HouseCall:
         out = []
         if self.service_enabled(svcs.TELEGRAM) and svc.get("telegram"):
             out.append(svcs.TELEGRAM)
-        if self.service_enabled(svcs.CHAT) and svc.get("chat"):
-            out.append(svcs.CHAT)
         return out
 
     async def _send_builtin(
@@ -440,8 +438,6 @@ class HouseCall:
                 msg_id = await self.telegram.send(svc["telegram"], text, ack)
                 if ack and msg_id:
                     item.setdefault("tg", []).append([svc["telegram"], msg_id])
-            elif name == svcs.CHAT:
-                await svcs.send_chat(self.hass, self.service_cfg(svcs.CHAT).get("webhook", ""), text)
             else:
                 return f"Unknown service {name}"
         except svcs.SendError as err:
@@ -456,16 +452,11 @@ class HouseCall:
         people = {p["id"]: p for p in self.people()}
         text = self._messaging_text(item, critical)
         priority = PRIORITY_CRITICAL if critical else item.get("priority", PRIORITY_NORMAL)
-        chat_sent = False
         for pid in item["to"]:
             person = people.get(pid)
             if not person or not self._wants_messaging(person, critical):
                 continue
             for name in self.person_builtins(person):
-                if name == svcs.CHAT:
-                    if chat_sent:
-                        continue  # one post in the shared family channel is enough
-                    chat_sent = True
                 if await self._send_builtin(name, person, text, priority, item) is None:
                     self._add_via(item, "messaging")
 
@@ -494,12 +485,12 @@ class HouseCall:
                 err = await self._try("notify", svc, {"message": text, "title": "HouseCall test"})
                 results.append({"channel": f"Phone app ({svc})", "ok": err is None, "error": err})
         if how in (TEST_ALL, TEST_MESSAGING):
-            names = {svcs.TELEGRAM: "Telegram", svcs.CHAT: "Discord channel"}
+            names = {svcs.TELEGRAM: "Telegram"}
             for name in self.person_builtins(person):
                 err = await self._send_builtin(name, person, text, PRIORITY_NORMAL)
                 results.append({"channel": names[name], "ok": err is None, "error": err})
         if not results:
-            what = {TEST_APP: "no phone app", TEST_MESSAGING: "no Telegram or Discord"}.get(how, "no phone app, Telegram or Discord")
+            what = {TEST_APP: "no phone app", TEST_MESSAGING: "no Telegram"}.get(how, "no phone app or Telegram")
             results.append({"channel": person["name"], "ok": False, "error": f"{person['name']} has {what} set up in HouseCall"})
         return results
 

@@ -122,7 +122,7 @@ class HouseCallOptionsFlow(OptionsFlow):
     # ------------------------------------------------------- messaging apps
 
     async def async_step_messaging(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Switch Telegram and the Discord channel on or off, choose when, pick a person."""
+        """Switch Telegram on or off, choose when to use it, and pick a person to link."""
         o = self.config_entry.options
         services_opt = dict(o.get(CONF_SERVICES) or {})
         was = [s for s in (services_opt.get("enabled") or []) if s in svcs.SERVICES]
@@ -151,7 +151,7 @@ class HouseCallOptionsFlow(OptionsFlow):
         return self.async_show_form(
             step_id="messaging",
             data_schema=vol.Schema(schema),
-            description_placeholders={"help": svcs.HELP + "messaging-services", "found": ""},
+            description_placeholders={"help": svcs.HELP_LINKS[svcs.TELEGRAM], "found": ""},
         )
 
     async def _next_step(self) -> ConfigFlowResult:
@@ -169,28 +169,6 @@ class HouseCallOptionsFlow(OptionsFlow):
         services = dict(self._new.get(CONF_SERVICES) or {})
         services[name] = cfg
         self._new[CONF_SERVICES] = services
-
-    async def async_step_setup_chat(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        errors: dict[str, str] = {}
-        placeholders = {"help": svcs.HELP_LINKS[svcs.CHAT], "error": ""}
-        if user_input is not None:
-            webhook = (user_input.get("webhook") or "").strip()
-            try:
-                await svcs.send_chat(self.hass, webhook, "HouseCall is now connected to this channel.")
-            except svcs.SendError as err:
-                errors["base"] = "check_failed"
-                placeholders["error"] = str(err)
-            else:
-                self._set_svc_cfg(svcs.CHAT, {"webhook": webhook})
-                return await self._next_step()
-        return self.async_show_form(
-            step_id="setup_chat",
-            data_schema=vol.Schema(
-                {vol.Required("webhook", description={"suggested_value": self._svc_cfg(svcs.CHAT).get("webhook", "")}): TextSelector()}
-            ),
-            errors=errors,
-            description_placeholders=placeholders,
-        )
 
     async def async_step_setup_telegram(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
@@ -215,7 +193,7 @@ class HouseCallOptionsFlow(OptionsFlow):
         )
 
     async def async_step_messaging_person(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Link one person to their Telegram chat and/or the Discord channel."""
+        """Link one person to their Telegram chat."""
         pid = self._editing
         name = self._person_name(pid)
         enabled = [s for s in ((self._new.get(CONF_SERVICES) or {}).get("enabled") or []) if s in svcs.SERVICES]
@@ -229,11 +207,6 @@ class HouseCallOptionsFlow(OptionsFlow):
                     cur[svcs.TELEGRAM] = chat
                 else:
                     cur.pop(svcs.TELEGRAM, None)
-            if svcs.CHAT in enabled:
-                if user_input.get("chat"):
-                    cur[svcs.CHAT] = True
-                else:
-                    cur.pop(svcs.CHAT, None)
             if cur:
                 all_svc[pid] = cur
             else:
@@ -251,14 +224,12 @@ class HouseCallOptionsFlow(OptionsFlow):
             schema[vol.Optional("telegram", default=str(cur.get(svcs.TELEGRAM) or "none"))] = SelectSelector(
                 SelectSelectorConfig(options=options, custom_value=True, mode=SelectSelectorMode.DROPDOWN)
             )
-        if svcs.CHAT in enabled:
-            schema[vol.Optional("chat", default=bool(cur.get(svcs.CHAT)))] = BooleanSelector()
         if not schema:
             return self._save(self._new)
         return self.async_show_form(
             step_id="messaging_person",
             data_schema=vol.Schema(schema),
-            description_placeholders={"name": name, "bot": bot, "help": svcs.HELP + "messaging-services"},
+            description_placeholders={"name": name, "bot": bot, "help": svcs.HELP_LINKS[svcs.TELEGRAM]},
         )
 
     def _person_name(self, pid: str) -> str:

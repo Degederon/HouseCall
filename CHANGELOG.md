@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [3.1.0] - 2026-11-14
+
+### Removed
+
+- **The Discord channel.** Telegram is now HouseCall's only messaging service. The settings page is called **Telegram**, with one switch: **Use Telegram**. A Discord channel set up earlier is ignored.
+
 ## [3.0.0] - 2026-11-14
 
 ### Changed

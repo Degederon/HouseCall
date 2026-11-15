@@ -18,7 +18,7 @@
           "people": "People from Home Assistant: show or hide",
           "add_person": "Add a HouseCall-only person",
           "edit_person": "Change or remove a HouseCall-only person",
-          "messaging": "Telegram and Discord",
+          "messaging": "Telegram",
           "send_test": "Send a test message",
           "quiet": "Quiet hours",
           "outputs": "Phones, speakers, Glass Message Board and repeats"
@@ -81,24 +81,22 @@
         }
       },
       "messaging": {
-        "title": "Telegram and Discord",
-        "description": "Reach people outside the Home Assistant app, for free.\n\n**Telegram** sends each person their own messages, and alarms come with an **I'm on it** button.\n**Discord** posts messages in a family channel.\n\nSwitch on what you want and press Submit. New services get a short setup page that checks they work.\n\nNeed help? [Step-by-step guide]({help})",
+        "title": "Telegram",
+        "description": "Reach people outside the Home Assistant app on Telegram, for free. Each person gets their own messages, and alarms come with an **I'm on it** button.\n\nSwitch on **Use Telegram** and press Submit. The first time, a short setup page helps you make a bot and checks it works.\n\nNeed help? [Telegram guide]({help})",
         "data": {
           "telegram": "Use Telegram",
-          "chat": "Use a Discord channel",
-          "channel_mode": "When to use them",
-          "person": "Then set up a person (optional)"
+          "channel_mode": "When to use it",
+          "person": "Then link a person's Telegram chat (optional)"
         },
         "data_description": {
-          "person": "Pick someone to link their Telegram chat or include them in the Discord channel. Do this once per person."
+          "person": "Pick someone to link their Telegram chat. Do this once per person."
         }
       },
       "messaging_person": {
-        "title": "How to reach {name}",
-        "description": "**Telegram:** {name} opens {bot} in Telegram and taps **Start**. Then close this window, open it again, and pick their Telegram name from the list.\n**Discord:** switch on to also post {name}'s messages in the family channel.\n\nNeed help? [Guide]({help})",
+        "title": "{name}'s Telegram chat",
+        "description": "{name} opens {bot} in Telegram and taps **Start**. Then close this window, open it again, and pick their Telegram name from the list.\n\nNeed help? [Guide]({help})",
         "data": {
-          "telegram": "Telegram chat",
-          "chat": "Also post their messages in the Discord channel"
+          "telegram": "Telegram chat"
         }
       },
       "send_test": {
@@ -118,13 +116,6 @@
         "description": "HouseCall sends Telegram messages through a bot of its own. Making one takes 2 minutes:\n\n1. In Telegram, search for **@BotFather** and open it.\n2. Send **/newbot**.\n3. Type a name, such as *Our House*, then a username ending in *bot*, such as *OurHouseCallBot*.\n4. BotFather replies with a **token** (a long code like `123456:ABC-DEF…`). Copy it and paste it below.\n\nUse a new bot just for HouseCall, not one that Home Assistant's Telegram bot integration already uses.\n\nNeed help? [Telegram guide]({help})",
         "data": {
           "token": "Bot token from BotFather"
-        }
-      },
-      "setup_chat": {
-        "title": "Set up a Discord channel (free)",
-        "description": "HouseCall posts messages in a Discord channel your family is in.\n\n1. In Discord, open the channel's settings (⚙).\n2. Choose **Integrations** → **Webhooks** → **New Webhook**.\n3. Give it a name, such as *HouseCall*, and select **Copy Webhook URL**.\n4. Paste the link below.\n\nHouseCall posts a short hello in the channel to check it works.\n\nNeed help? [Discord guide]({help})",
-        "data": {
-          "webhook": "Discord webhook link"
         }
       }
     },
@@ -212,7 +203,7 @@
       "options": {
         "all": "Everything they have",
         "app": "Home Assistant app only",
-        "messaging": "Telegram and Discord only"
+        "messaging": "Telegram only"
       }
     }
   }

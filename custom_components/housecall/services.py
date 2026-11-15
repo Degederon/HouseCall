@@ -4,7 +4,6 @@ Each service talks to the messaging app directly, so nothing else has to be
 installed. All of them are free:
 
 - Telegram   (Telegram Bot API, with an "I'm on it" button)
-- Discord    (a family channel, through a webhook link; Slack links work too)
 """
 
 from __future__ import annotations
@@ -21,16 +20,14 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 _LOGGER = logging.getLogger(__name__)
 
 TELEGRAM = "telegram"
-CHAT = "chat"
-SERVICES = [TELEGRAM, CHAT]
+SERVICES = [TELEGRAM]
 
 # Services that need a one-time setup for the whole house.
-NEEDS_SETUP = [TELEGRAM, CHAT]
+NEEDS_SETUP = [TELEGRAM]
 
 HELP = "https://github.com/Degederon/HouseCall#"
 HELP_LINKS = {
     TELEGRAM: HELP + "telegram",
-    CHAT: HELP + "discord-channel",
 }
 
 ACK_CALLBACK = "hc_ack:"
@@ -172,22 +169,3 @@ class Telegram:
                 )
             except SendError:
                 pass
-
-
-# --------------------------------------------- Discord or Slack channel
-
-
-async def send_chat(hass: HomeAssistant, webhook: str, text: str) -> None:
-    webhook = (webhook or "").strip()
-    if not webhook.startswith("https://"):
-        raise SendError("The channel link should start with https://")
-    body = {"text": text} if "hooks.slack.com" in webhook else {"content": text[:2000]}
-    session = async_get_clientsession(hass)
-    try:
-        async with session.post(webhook, json=body, timeout=TIMEOUT) as resp:
-            if resp.status >= 400:
-                raise SendError(f"The channel refused the message ({resp.status}). Copy the webhook link again.")
-    except asyncio.TimeoutError as err:
-        raise SendError("The chat service didn't answer in time") from err
-    except aiohttp.ClientError as err:
-        raise SendError(f"Couldn't reach the chat service: {err}") from err
