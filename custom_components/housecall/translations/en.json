@@ -18,7 +18,7 @@
           "people": "People from Home Assistant: show or hide",
           "add_person": "Add a HouseCall-only person",
           "edit_person": "Change or remove a HouseCall-only person",
-          "messaging": "Messaging services (Telegram, ntfy, email, Discord/Slack)",
+          "messaging": "Telegram and Discord",
           "send_test": "Send a test message",
           "quiet": "Quiet hours",
           "outputs": "Phones, speakers, Glass Message Board and repeats"
@@ -81,26 +81,24 @@
         }
       },
       "messaging": {
-        "title": "Messaging services",
-        "description": "Reach people outside the Home Assistant app. Tick the services you want to use; anything not ticked is ignored. All of them are free.\n\nAfter you press Submit, HouseCall walks you through setting up each new service, one page at a time.\n\nNeed help? [Step-by-step guide]({help})",
+        "title": "Telegram and Discord",
+        "description": "Reach people outside the Home Assistant app, for free.\n\n**Telegram** sends each person their own messages, and alarms come with an **I'm on it** button.\n**Discord** posts messages in a family channel.\n\nSwitch on what you want and press Submit. New services get a short setup page that checks they work.\n\nNeed help? [Step-by-step guide]({help})",
         "data": {
-          "enabled": "Services to use",
+          "telegram": "Use Telegram",
+          "chat": "Use a Discord channel",
           "channel_mode": "When to use them",
-          "person": "Then set up messaging for (optional)"
+          "person": "Then set up a person (optional)"
         },
         "data_description": {
-          "person": "Pick someone to choose how each ticked service reaches them. Do this once per person."
+          "person": "Pick someone to link their Telegram chat or include them in the Discord channel. Do this once per person."
         }
       },
       "messaging_person": {
         "title": "How to reach {name}",
-        "description": "Fill in only what {name} uses. Leave the rest empty.\n\n**Telegram:** {name} opens {bot} in Telegram and taps **Start**. Then close this window, open it again, and pick their name from the list.\n**ntfy:** switch on, and the next page shows the channel {name} subscribes to.\n\nNeed help? [Guide]({help})",
+        "description": "**Telegram:** {name} opens {bot} in Telegram and taps **Start**. Then close this window, open it again, and pick their Telegram name from the list.\n**Discord:** switch on to also post {name}'s messages in the family channel.\n\nNeed help? [Guide]({help})",
         "data": {
           "telegram": "Telegram chat",
-          "ntfy": "Use ntfy",
-          "email": "Email address(es), separated by commas",
-          "chat": "Also post their messages in the family channel",
-          "routes": "Other apps already in Home Assistant (advanced)"
+          "chat": "Also post their messages in the Discord channel"
         }
       },
       "send_test": {
@@ -115,10 +113,6 @@
         "title": "Test results",
         "description": "{report}\n\nPress Submit to go back to the settings."
       },
-      "messaging_addresses": {
-        "title": "Where to reach {name}",
-        "description": "For each app, type how it reaches {name}:\n- Signal, SMS: their number with the country code, such as +15551234567\n- Email: their email address\n- Discord, Slack, Matrix: the channel or room\n- Threema: their Threema ID\n\nLeave a box empty if that app already knows who to send to. Separate several with commas."
-      },
       "setup_telegram": {
         "title": "Set up Telegram (free)",
         "description": "HouseCall sends Telegram messages through a bot of its own. Making one takes 2 minutes:\n\n1. In Telegram, search for **@BotFather** and open it.\n2. Send **/newbot**.\n3. Type a name, such as *Our House*, then a username ending in *bot*, such as *OurHouseCallBot*.\n4. BotFather replies with a **token** (a long code like `123456:ABC-DEF…`). Copy it and paste it below.\n\nUse a new bot just for HouseCall, not one that Home Assistant's Telegram bot integration already uses.\n\nNeed help? [Telegram guide]({help})",
@@ -126,35 +120,12 @@
           "token": "Bot token from BotFather"
         }
       },
-      "setup_ntfy": {
-        "title": "Set up ntfy (free)",
-        "description": "ntfy needs no account. HouseCall gives each person their own private channel, and they just install the free **ntfy** app.\n\nKeep the server below as **https://ntfy.sh** unless you run your own ntfy server.\n\nNeed help? [ntfy guide]({help})",
-        "data": {
-          "server": "ntfy server"
-        }
-      },
-      "setup_email": {
-        "title": "Set up email (free)",
-        "description": "HouseCall sends email from an email account you already have.\n\n1. Pick your email provider.\n2. Type the email address to send from.\n3. Type an **app password** for that account. Gmail, Yahoo and iCloud don't accept your normal password here: create an app password in your account's security settings (the guide shows where).\n4. Only for **Other**: fill in the server, port and security from your provider's help pages.\n\nHouseCall checks it can sign in before saving. Nothing is sent yet.\n\nNeed help? [Email guide]({help})",
-        "data": {
-          "provider": "Email provider",
-          "username": "Email address to send from",
-          "password": "App password",
-          "host": "Server (Other only)",
-          "port": "Port (Other only)",
-          "security": "Security (Other only)"
-        }
-      },
       "setup_chat": {
-        "title": "Set up a Discord or Slack channel (free)",
-        "description": "HouseCall can post alerts in a family channel on Discord or Slack.\n\n**Discord:** open the channel's settings (⚙) → **Integrations** → **Webhooks** → **New Webhook** → **Copy Webhook URL**.\n**Slack:** create an *Incoming Webhook* for the channel and copy its URL.\n\nPaste the link below. HouseCall posts a short hello in the channel to check it works.\n\nNeed help? [Discord and Slack guide]({help})",
+        "title": "Set up a Discord channel (free)",
+        "description": "HouseCall posts messages in a Discord channel your family is in.\n\n1. In Discord, open the channel's settings (⚙).\n2. Choose **Integrations** → **Webhooks** → **New Webhook**.\n3. Give it a name, such as *HouseCall*, and select **Copy Webhook URL**.\n4. Paste the link below.\n\nHouseCall posts a short hello in the channel to check it works.\n\nNeed help? [Discord guide]({help})",
         "data": {
-          "webhook": "Channel webhook link"
+          "webhook": "Discord webhook link"
         }
-      },
-      "ntfy_info": {
-        "title": "Last step for {name}: ntfy",
-        "description": "{name} needs to do this once:\n\n1. Install the free **ntfy** app (App Store or Google Play).\n2. Tap **+** to subscribe to a topic.\n3. Type this topic exactly: **{topic}**\n4. If they use a server other than ntfy.sh, tick *Use another server* and type **{server}**.\n\nOr open this link on their phone: {link}\n\nKeep the topic private: anyone who knows it can read the messages. Press Submit to save."
       }
     },
     "error": {
@@ -162,8 +133,7 @@
       "check_failed": "{error}"
     },
     "abort": {
-      "nobody_to_test": "There's nobody in HouseCall to send a test to yet. Add people first.",
-      "no_services": "Tick at least one messaging service first, or connect another messaging app to Home Assistant."
+      "nobody_to_test": "There's nobody in HouseCall to send a test to yet. Add people first."
     }
   },
   "services": {
@@ -242,30 +212,7 @@
       "options": {
         "all": "Everything they have",
         "app": "Home Assistant app only",
-        "messaging": "Messaging apps only"
-      }
-    },
-    "service": {
-      "options": {
-        "telegram": "Telegram: free, recommended. I'm on it button right in the chat.",
-        "ntfy": "ntfy: free app, no account needed.",
-        "email": "Email: from your own email account.",
-        "chat": "Discord or Slack: post in a family channel."
-      }
-    },
-    "email_provider": {
-      "options": {
-        "gmail": "Gmail",
-        "yahoo": "Yahoo Mail",
-        "icloud": "iCloud Mail",
-        "other": "Other"
-      }
-    },
-    "email_security": {
-      "options": {
-        "starttls": "STARTTLS (usually port 587)",
-        "ssl": "SSL/TLS (usually port 465)",
-        "none": "None"
+        "messaging": "Telegram and Discord only"
       }
     }
   }

@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [3.0.0] - 2026-11-14
+
+### Changed
+
+- **Messaging is now Telegram and Discord only.** The settings page is called **Telegram and Discord**, with two simple switches: **Use Telegram** and **Use a Discord channel**.
+
+### Removed
+
+- **ntfy, email, and "Other apps already in Home Assistant"** (such as Signal). Only Telegram and a Discord channel remain. Settings for removed services are ignored, and removed the next time you save that person.
+
 ## [2.1.1] - 2026-11-14
 
 ### Fixed

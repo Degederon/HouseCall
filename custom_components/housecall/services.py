@@ -4,19 +4,13 @@ Each service talks to the messaging app directly, so nothing else has to be
 installed. All of them are free:
 
 - Telegram   (Telegram Bot API, with an "I'm on it" button)
-- ntfy       (ntfy.sh or your own ntfy server)
-- Email      (any email account, through SMTP)
-- Chat       (a Discord or Slack channel, through a webhook link)
+- Discord    (a family channel, through a webhook link; Slack links work too)
 """
 
 from __future__ import annotations
 
 import asyncio
-from email.message import EmailMessage
 import logging
-import secrets
-import smtplib
-import ssl
 from typing import Any, Awaitable, Callable
 
 import aiohttp
@@ -27,27 +21,16 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 _LOGGER = logging.getLogger(__name__)
 
 TELEGRAM = "telegram"
-NTFY = "ntfy"
-EMAIL = "email"
 CHAT = "chat"
-SERVICES = [TELEGRAM, NTFY, EMAIL, CHAT]
+SERVICES = [TELEGRAM, CHAT]
 
 # Services that need a one-time setup for the whole house.
-NEEDS_SETUP = [TELEGRAM, NTFY, EMAIL, CHAT]
+NEEDS_SETUP = [TELEGRAM, CHAT]
 
 HELP = "https://github.com/Degederon/HouseCall#"
 HELP_LINKS = {
     TELEGRAM: HELP + "telegram",
-    NTFY: HELP + "ntfy",
-    EMAIL: HELP + "email",
-    CHAT: HELP + "discord-or-slack-channel",
-}
-
-EMAIL_PRESETS = {
-    "gmail": ("smtp.gmail.com", 587, "starttls"),
-    "yahoo": ("smtp.mail.yahoo.com", 465, "ssl"),
-    "icloud": ("smtp.mail.me.com", 587, "starttls"),
-    "other": ("", 587, "starttls"),
+    CHAT: HELP + "discord-channel",
 }
 
 ACK_CALLBACK = "hc_ack:"
@@ -56,11 +39,6 @@ TIMEOUT = aiohttp.ClientTimeout(total=20)
 
 class SendError(Exception):
     """A message couldn't be delivered; the text says why, in plain words."""
-
-
-def new_ntfy_topic(name: str) -> str:
-    safe = "".join(c for c in name.lower() if c.isalnum())[:12] or "person"
-    return f"housecall-{safe}-{secrets.token_hex(4)}"
 
 
 # ---------------------------------------------------------------- Telegram
@@ -194,76 +172,6 @@ class Telegram:
                 )
             except SendError:
                 pass
-
-
-# -------------------------------------------------------------------- ntfy
-
-
-async def send_ntfy(hass: HomeAssistant, server: str, topic: str, text: str, title: str, priority: str) -> None:
-    server = (server or "https://ntfy.sh").rstrip("/")
-    body = {
-        "topic": topic,
-        "message": text,
-        "title": title,
-        "priority": {"critical": 5, "normal": 3, "info": 2}.get(priority, 3),
-        "tags": {"critical": ["rotating_light"], "normal": ["house"], "info": ["information_source"]}.get(priority, []),
-    }
-    session = async_get_clientsession(hass)
-    try:
-        async with session.post(server, json=body, timeout=TIMEOUT) as resp:
-            if resp.status >= 400:
-                raise SendError(f"ntfy said: {resp.status} {await resp.text()}"[:200])
-    except asyncio.TimeoutError as err:
-        raise SendError("ntfy didn't answer in time") from err
-    except aiohttp.ClientError as err:
-        raise SendError(f"Couldn't reach ntfy at {server}: {err}") from err
-
-
-# ------------------------------------------------------------------- Email
-
-
-def _smtp_send(cfg: dict[str, Any], to: list[str], subject: str, text: str) -> None:
-    host = cfg.get("host") or ""
-    port = int(cfg.get("port") or 587)
-    security = cfg.get("security") or "starttls"
-    user = cfg.get("username") or ""
-    password = cfg.get("password") or ""
-    msg = EmailMessage()
-    msg["From"] = cfg.get("sender") or user
-    msg["To"] = ", ".join(to)
-    msg["Subject"] = subject
-    msg.set_content(text)
-    context = ssl.create_default_context()
-    try:
-        if security == "ssl":
-            server: smtplib.SMTP = smtplib.SMTP_SSL(host, port, timeout=20, context=context)
-        else:
-            server = smtplib.SMTP(host, port, timeout=20)
-            server.ehlo()
-            if security == "starttls":
-                server.starttls(context=context)
-                server.ehlo()
-        with server:
-            if user:
-                server.login(user, password)
-            if to:
-                server.send_message(msg)
-    except smtplib.SMTPAuthenticationError as err:
-        raise SendError(
-            "The email account refused the password. Most email providers need an 'app password' here, "
-            "not your normal password."
-        ) from err
-    except (smtplib.SMTPException, OSError) as err:
-        raise SendError(f"Email failed: {err}") from err
-
-
-async def send_email(hass: HomeAssistant, cfg: dict[str, Any], to: list[str], subject: str, text: str) -> None:
-    await hass.async_add_executor_job(_smtp_send, cfg, to, subject, text)
-
-
-async def check_email(hass: HomeAssistant, cfg: dict[str, Any]) -> None:
-    """Logs in without sending anything."""
-    await hass.async_add_executor_job(_smtp_send, cfg, [], "", "")
 
 
 # --------------------------------------------- Discord or Slack channel

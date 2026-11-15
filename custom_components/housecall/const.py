@@ -1,7 +1,7 @@
 """Constants for HouseCall."""
 
 DOMAIN = "housecall"
-VERSION = "2.1.1"
+VERSION = "3.0.0"
 
 CONF_MEMBERS = "members"  # options-screen field only
 CONF_PEOPLE = "people"

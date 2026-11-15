@@ -71,24 +71,6 @@ def notify_services(hass: HomeAssistant) -> list[str]:
     return sorted(hass.services.async_services().get("notify", {}).keys())
 
 
-def messaging_routes(hass: HomeAssistant) -> dict[str, str]:
-    """Every way Home Assistant can send a message except the Companion app.
-
-    Returns {route: label}. A route is a notify entity (Telegram bot chats,
-    ntfy topics, Pushover, Whatsigram...) or a notify action (Signal, email...).
-    """
-    routes: dict[str, str] = {}
-    for state in hass.states.async_all("notify"):
-        routes[state.entity_id] = f"{state.attributes.get('friendly_name') or state.entity_id} ({state.entity_id})"
-    skip = {"notify", "send_message", "persistent_notification"}
-    for svc in notify_services(hass):
-        route = f"notify.{svc}"
-        if svc in skip or svc.startswith("mobile_app_") or route in routes:
-            continue
-        routes[route] = f"{route} (action)"
-    return dict(sorted(routes.items(), key=lambda kv: kv[1].lower()))
-
-
 def list_dashboards(hass: HomeAssistant) -> list[str]:
     """URL paths of the dashboards, e.g. ['dashboard-housecall'] (best effort)."""
     try:
@@ -426,21 +408,6 @@ class HouseCall:
         text = f"{title}: {item['message']}" if title else item["message"]
         return f"URGENT: {text}" if critical else text
 
-    async def _send_route(self, route: str, address: str, text: str) -> str | None:
-        if not route.startswith("notify."):
-            return f"Unknown route {route}"
-        if self.hass.states.get(route) is not None:
-            # A notify entity, e.g. a Telegram bot chat, ntfy topic or Whatsigram recipient.
-            return await self._try("notify", "send_message", {"message": text}, target={"entity_id": route})
-        service = route.split(".", 1)[1]
-        if not self.hass.services.has_service("notify", service):
-            return f"{route} doesn't exist (any more)"
-        data: dict[str, Any] = {"message": text}
-        targets = [a.strip() for a in address.split(",") if a.strip()]
-        if targets:
-            data["target"] = targets
-        return await self._try("notify", service, data)
-
     # Built-in services -------------------------------------------------
 
     def service_enabled(self, name: str) -> bool:
@@ -455,10 +422,6 @@ class HouseCall:
         out = []
         if self.service_enabled(svcs.TELEGRAM) and svc.get("telegram"):
             out.append(svcs.TELEGRAM)
-        if self.service_enabled(svcs.NTFY) and svc.get("ntfy"):
-            out.append(svcs.NTFY)
-        if self.service_enabled(svcs.EMAIL) and svc.get("email"):
-            out.append(svcs.EMAIL)
         if self.service_enabled(svcs.CHAT) and svc.get("chat"):
             out.append(svcs.CHAT)
         return out
@@ -477,12 +440,6 @@ class HouseCall:
                 msg_id = await self.telegram.send(svc["telegram"], text, ack)
                 if ack and msg_id:
                     item.setdefault("tg", []).append([svc["telegram"], msg_id])
-            elif name == svcs.NTFY:
-                await svcs.send_ntfy(self.hass, self.service_cfg(svcs.NTFY).get("server", ""), svc["ntfy"], text, title, priority)
-            elif name == svcs.EMAIL:
-                to = [a.strip() for a in str(svc["email"]).split(",") if a.strip()]
-                subject = ("URGENT: " if priority == PRIORITY_CRITICAL else "") + "HouseCall"
-                await svcs.send_email(self.hass, self.service_cfg(svcs.EMAIL), to, subject, text)
             elif name == svcs.CHAT:
                 await svcs.send_chat(self.hass, self.service_cfg(svcs.CHAT).get("webhook", ""), text)
             else:
@@ -511,9 +468,6 @@ class HouseCall:
                     chat_sent = True
                 if await self._send_builtin(name, person, text, priority, item) is None:
                     self._add_via(item, "messaging")
-            for route in person.get("routes") or []:
-                if await self._send_route(route, self.address_for(person, route), text) is None:
-                    self._add_via(item, "messaging")
 
     async def _telegram_chat(self, chat_id: int, name: str) -> None:
         if self.tg_chats.get(str(chat_id)) != name:
@@ -540,16 +494,12 @@ class HouseCall:
                 err = await self._try("notify", svc, {"message": text, "title": "HouseCall test"})
                 results.append({"channel": f"Phone app ({svc})", "ok": err is None, "error": err})
         if how in (TEST_ALL, TEST_MESSAGING):
-            names = {svcs.TELEGRAM: "Telegram", svcs.NTFY: "ntfy", svcs.EMAIL: "Email", svcs.CHAT: "Family chat channel"}
+            names = {svcs.TELEGRAM: "Telegram", svcs.CHAT: "Discord channel"}
             for name in self.person_builtins(person):
                 err = await self._send_builtin(name, person, text, PRIORITY_NORMAL)
                 results.append({"channel": names[name], "ok": err is None, "error": err})
-            labels = messaging_routes(self.hass)
-            for route in person["routes"]:
-                err = await self._send_route(route, self.address_for(person, route), text)
-                results.append({"channel": labels.get(route, route), "ok": err is None, "error": err})
         if not results:
-            what = {TEST_APP: "no phone app", TEST_MESSAGING: "no messaging apps"}.get(how, "no phone app or messaging apps")
+            what = {TEST_APP: "no phone app", TEST_MESSAGING: "no Telegram or Discord"}.get(how, "no phone app, Telegram or Discord")
             results.append({"channel": person["name"], "ok": False, "error": f"{person['name']} has {what} set up in HouseCall"})
         return results
 

@@ -8,7 +8,7 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.11%2B-18BCF2.svg?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
-[![Version](https://img.shields.io/badge/version-2.1.1-6E56CF.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.0.0-6E56CF.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
@@ -33,7 +33,7 @@ It matches the look of [Glass Message Board](https://github.com/Degederon/GlassM
 6. [Everyday use](#everyday-use)
 7. [Change settings](#change-settings)
 8. [Reach people who don't use the Home Assistant app](#reach-people-who-dont-use-the-home-assistant-app) (optional)
-   - [Messaging services: Telegram, ntfy, email, Discord/Slack](#messaging-services)
+   - [Messaging services: Telegram and Discord](#messaging-services)
 9. [Send a test message](#send-a-test-message)
 10. [Use HouseCall in automations](#use-housecall-in-automations)
 11. [Card options](#card-options)
@@ -49,7 +49,7 @@ It matches the look of [Glass Message Board](https://github.com/Degederon/GlassM
 | **"I'm on it"** | One tap stops the alarm on everyone's phone and tells the others who's handling it. |
 | **Speakers** | Alarms are read aloud on the speakers you choose. |
 | **Glass Message Board** | Every message also appears as a note on your board. |
-| **Messaging services** | Optionally reach people on Telegram, ntfy, email or a Discord/Slack channel. Built in and free, nothing else to install. |
+| **Telegram and Discord** | Optionally reach people on Telegram, or in a family Discord channel. Built in and free, nothing else to install. |
 | **Send a test message** | Check that someone can be reached, without a real alarm. |
 | **Frosted-glass card** | Today's messages, who's home, and a message box, all in one card. |
 | **No YAML** | Everything is set up from the Home Assistant screens. |
@@ -100,7 +100,7 @@ You need:
 - **The Home Assistant app** on each phone, signed in. This is how phones get alerts.
 - **On iPhone:** allow **Critical Alerts** for the Home Assistant app (iPhone **Settings → Notifications → Home Assistant**), so alarms can sound on silent.
 
-Optional extras: speakers for read-aloud alarms, [Glass Message Board](https://github.com/Degederon/GlassMessageBoard), and messaging services for people without the Home Assistant app.
+Optional extras: speakers for read-aloud alarms, [Glass Message Board](https://github.com/Degederon/GlassMessageBoard), and Telegram or Discord for people without the Home Assistant app.
 
 ## Set up HouseCall
 
@@ -192,7 +192,7 @@ All settings are in one place: **Settings → Devices & services → HouseCall �
 | **People from Home Assistant: show or hide** | Who appears in HouseCall, and their phones. |
 | **Add a HouseCall-only person** | Add someone who isn't in Home Assistant, such as Grandma. |
 | **Change or remove a HouseCall-only person** | Edit or delete them. |
-| **Messaging services** | Telegram, ntfy, email, Discord/Slack. [Details](#messaging-services). |
+| **Telegram and Discord** | Reach people on Telegram or in a Discord channel. [Details](#messaging-services). |
 | **Send a test message** | Check how someone can be reached. [Details](#send-a-test-message). |
 | **Quiet hours** | When Normal messages wait. Default: 10 PM to 7 AM. |
 | **Phones, speakers, Glass Message Board and repeats** | Which page opens when a notification is tapped, speakers and voice for alarms, posting to Glass Message Board, and how often alarms repeat. |
@@ -234,47 +234,45 @@ Under **Configure → Phones, speakers, Glass Message Board and repeats**:
 For people who won't install the Home Assistant app, you have two free choices:
 
 1. **Give them a login to your Home Assistant.** Add them under **Settings → People** with **Allow login** on, and have them install the Home Assistant app. They then get everything, including loud alarms. Their app must be able to reach your Home Assistant from outside your house.
-2. **Use a messaging service they already have.** HouseCall has free messaging services built in, with nothing else to install. See below.
+2. **Use Telegram or a Discord channel.** Both are built into HouseCall and free, with nothing else to install. See below.
 
 > [!NOTE]
-> Messages in Telegram, ntfy, email and so on can't sound an alarm on silent. Only the Home Assistant app can.
+> Telegram and Discord can't sound an alarm on silent. Only the Home Assistant app can.
 
 ## Messaging services
 
-HouseCall has these services built in. All of them are free. You only switch on the ones you want, and anything you don't tick is ignored.
+HouseCall has two free messaging services built in:
 
 | Service | Good for | What each person needs |
 |---|---|---|
-| **Telegram** ⭐ recommended | Everyone. Alarms come with an **I'm on it** button right in the chat. | The free Telegram app. |
-| **ntfy** | People who want a simple alerts app with no account. | The free ntfy app. |
-| **Email** | Anyone with an email address. | Nothing. |
-| **Discord or Slack channel** | A family group chat. | To be in the channel. |
+| **Telegram** ⭐ recommended | Reaching each person directly. Alarms come with an **I'm on it** button right in the chat. | The free Telegram app. |
+| **Discord channel** | A family group chat where everyone sees the messages. | To be in the Discord channel. |
 
-**WhatsApp and Facebook Messenger aren't included.** Neither offers a free, official way for a home system to send messages: WhatsApp charges per message, and Messenger blocks messages to anyone who hasn't written to you in the last 24 hours.
+Other messaging apps aren't included. WhatsApp, Facebook Messenger, SMS and the others either cost money, need a business account, or have no reliable way for a home system to send messages.
 
-### Switch services on: 3 steps
+### Switch them on
 
-1. Go to **Settings → Devices & services → HouseCall → Configure → Messaging services**.
-2. **Tick the services you want**, choose [when to use them](#when-messaging-services-are-used), and select **Submit**.
-3. HouseCall now shows **one setup page for each new service**, with numbered steps and a help link. It checks each one works before saving. The guides are below.
+1. Go to **Settings → Devices & services → HouseCall → Configure → Telegram and Discord**.
+2. Switch on **Use Telegram**, **Use a Discord channel**, or both. Choose [when to use them](#when-messaging-services-are-used), and select **Submit**.
+3. HouseCall shows a short setup page for each one you switched on, and checks it works before saving. The guides are below.
 
 ### Tell HouseCall how to reach each person
 
-1. **Configure → Messaging services**. Leave the ticks as they are.
-2. Under **Then set up messaging for**, pick a person and select **Submit**.
-3. Fill in only what that person uses: their Telegram chat, ntfy, email address, or the family channel. Select **Submit**.
-4. Check it with [Send a test message](#send-a-test-message), choosing **Messaging apps only**.
+1. **Configure → Telegram and Discord**. Leave the switches as they are.
+2. Under **Then set up a person**, pick someone and select **Submit**.
+3. Pick their **Telegram chat**, and/or switch on **Also post their messages in the Discord channel**. Select **Submit**.
+4. Check it with [Send a test message](#send-a-test-message), choosing **Telegram and Discord only**.
 
 ### When messaging services are used
 
 | Choice | What happens |
 |---|---|
-| **Recommended** | Alarms go to everyone's messaging services. People without the Home Assistant app also get every Normal message there. |
-| **Every Normal and Critical message** | Everyone gets everything in their messaging services too. |
-| **Only for people without the Home Assistant app** | Messaging is only used for those people. |
-| **Never** | Messaging is switched off. |
+| **Recommended** | Alarms go to everyone's Telegram and Discord. People without the Home Assistant app also get every Normal message there. |
+| **Every Normal and Critical message** | Everyone gets everything in Telegram and Discord too. |
+| **Only for people without the Home Assistant app** | Telegram and Discord are only used for those people. |
+| **Never** | Telegram and Discord are switched off. |
 
-Info messages and alarm repeats never go to messaging services, so chats don't get flooded.
+Info messages and alarm repeats never go to Telegram or Discord, so chats don't get flooded.
 
 ### Telegram
 
@@ -291,7 +289,7 @@ Use a new bot just for HouseCall. If Home Assistant's own Telegram bot integrati
 **For each person:**
 
 1. They open your bot in Telegram (search for its username) and tap **Start**.
-2. In HouseCall, set up messaging for that person. Their name now appears in the **Telegram chat** list. Pick it and select **Submit**.
+2. In HouseCall, set up that person (**Configure → Telegram and Discord → Then set up a person**). Their Telegram name now appears in the **Telegram chat** list. Pick it and select **Submit**.
 
 If their name isn't in the list yet, close the settings window, wait a few seconds, and open it again.
 
@@ -312,7 +310,7 @@ Bot:          Hi Christopher! This chat is now connected to HouseCall.
               for Telegram in HouseCall.
 ```
 
-**3. You link his chat (once).** **Configure → Messaging services → Then set up messaging for → Christopher**. In **Telegram chat**, pick *Christopher (123456789)* and select **Submit**. The chat appears under his Telegram name, which might not match his name in Home Assistant.
+**3. You link his chat (once).** **Configure → Telegram and Discord → Then set up a person → Christopher**. In **Telegram chat**, pick *Christopher (123456789)* and select **Submit**. The chat appears under his Telegram name, which might not match his name in Home Assistant.
 
 **4. Check it.** In **Settings → Developer tools → Actions**, switch to YAML mode, paste this and select **Perform action**:
 
@@ -360,54 +358,23 @@ When he taps **I'm on it**, the alarm stops for everyone, the card shows **Handl
 Bot:  Handled by Christopher.
 ```
 
-### ntfy
-
-**Once, for the house:** tick **ntfy** and keep the server as `https://ntfy.sh`. There's no account to create.
-
-**For each person:**
-
-1. In HouseCall, set up messaging for that person and switch on **Use ntfy**.
-2. The next page shows their private **topic**, such as `housecall-jay-3f9a1c2b`.
-3. On their phone, they install the free **ntfy** app, tap **+**, and type that topic exactly.
-
-Keep the topic private: anyone who knows it can read the messages. Alarms arrive with ntfy's highest priority.
-
-### Email
+### Discord channel
 
 **Once, for the house:**
 
-1. Pick your email provider: **Gmail**, **Yahoo Mail**, **iCloud Mail**, or **Other**.
-2. Type the email address to send from.
-3. Type an **app password** for that account (not your normal password):
-   - **Gmail:** Google Account → **Security** → turn on **2-Step Verification** → **App passwords** → create one called *HouseCall*.
-   - **Yahoo:** Account Info → **Account security** → **Generate app password**.
-   - **iCloud:** appleid.apple.com → **Sign-In and Security** → **App-Specific Passwords**.
-4. For **Other**, also fill in the server, port and security from your provider's help pages.
-5. Select **Submit**. HouseCall signs in to check it works, without sending anything.
+1. In Discord, open the channel's settings (⚙).
+2. Choose **Integrations** → **Webhooks** → **New Webhook**.
+3. Give it a name, such as *HouseCall*, and select **Copy Webhook URL**.
+4. Paste the link on HouseCall's **Set up a Discord channel** page. HouseCall posts a short hello in the channel to check it works.
 
-**For each person:** type their email address. Separate several with commas.
-
-### Discord or Slack channel
-
-**Once, for the house:**
-
-- **Discord:** open the channel's settings (⚙) → **Integrations** → **Webhooks** → **New Webhook** → **Copy Webhook URL**.
-- **Slack:** add an **Incoming Webhook** for the channel and copy its URL.
-
-Paste the link on HouseCall's setup page. HouseCall posts a short hello in the channel to check it works.
-
-**For each person:** switch on **Also post their messages in the family channel**. Each message is posted once, however many people it's for.
-
-### Other apps already in Home Assistant (advanced)
-
-If you already use another messaging integration in Home Assistant, such as **Signal Messenger**, HouseCall can send through it too. It appears under **Other apps already in Home Assistant** on each person's page. For apps that need it, HouseCall asks for their number, email address or channel. Apple iMessage, Google Messages and Instagram can't be used.
+**For each person:** switch on **Also post their messages in the Discord channel**. Each message is posted once, however many people it's for.
 
 ## Send a test message
 
 Check that someone can be reached, without sending a real alarm:
 
 1. **Configure → Send a test message**.
-2. Pick the person and how to send: **Everything they have**, **Home Assistant app only**, or **Messaging apps only**.
+2. Pick the person and how to send: **Everything they have**, **Home Assistant app only**, or **Telegram and Discord only**.
 3. Select **Submit**. You'll see a ✅ or ❌ for each way HouseCall tried, with the reason if something failed.
 
 Test messages aren't saved in the message history. The starter dashboard also has a **Test messaging apps** button.
@@ -548,9 +515,8 @@ max_items: 20             # how many messages to show
 | Speakers don't read alarms | Pick both a speaker and a voice under **Configure → Phones, speakers, Glass Message Board and repeats**. |
 | Nothing appears on Glass Message Board | Check Glass Message Board is installed, and that posting to it is on under **Configure**. |
 | A Telegram person isn't in the list | They need to open your bot and tap **Start** first. Then close the settings window and open it again. |
-| The Telegram **I'm on it** button does nothing | Another program uses the same bot. Make a new bot just for HouseCall and paste its token under **Configure → Messaging services**. |
-| Email says the password was refused | Use an **app password**, not your normal password. See [Email](#email). |
-| A test shows ❌ for a messaging service | Read the reason next to it. It explains what to fix in plain words. |
+| The Telegram **I'm on it** button does nothing | Another program uses the same bot. Make a new bot just for HouseCall and paste its token under **Configure → Telegram and Discord**. |
+| A test shows ❌ for Telegram or Discord | Read the reason next to it. It explains what to fix in plain words. |
 | A button says **Nobody called … in HouseCall** | Use a name that's in HouseCall (the message lists them), or `me`. For `me` to work, your login must be linked to your person under **Settings → People**. |
 | An alarm says **Nobody answered** | Nobody tapped **I'm on it** before the last repeat, or Home Assistant restarted. |
 

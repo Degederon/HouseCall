@@ -56,7 +56,7 @@ from .const import (
     TEST_MESSAGING,
 )
 from . import services as svcs
-from .hub import HouseCall, discover_people, list_dashboards, messaging_routes, normalize_path, notify_services
+from .hub import HouseCall, discover_people, list_dashboards, normalize_path, notify_services
 
 
 class HouseCallConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -122,30 +122,27 @@ class HouseCallOptionsFlow(OptionsFlow):
     # ------------------------------------------------------- messaging apps
 
     async def async_step_messaging(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Page 1: tick the messaging services to use."""
+        """Switch Telegram and the Discord channel on or off, choose when, pick a person."""
         o = self.config_entry.options
         services_opt = dict(o.get(CONF_SERVICES) or {})
+        was = [s for s in (services_opt.get("enabled") or []) if s in svcs.SERVICES]
         if user_input is not None:
-            enabled = [s for s in svcs.SERVICES if s in (user_input.get("enabled") or [])]
+            enabled = [s for s in svcs.SERVICES if user_input.get(s)]
             self._new = {
                 CONF_CHANNEL_MODE: user_input.get(CONF_CHANNEL_MODE, DEFAULT_CHANNEL_MODE),
                 CONF_SERVICES: {**services_opt, "enabled": enabled},
             }
-            self._editing = user_input.get("person")
-            # Guided setup for each ticked service that needs it (again if not finished before).
-            self._setup_queue = [s for s in svcs.NEEDS_SETUP if s in enabled and (
-                s not in (services_opt.get("enabled") or []) or not services_opt.get(s)
-            )]
+            self._editing = user_input.get("person") if enabled else None
+            self._setup_queue = [
+                s for s in svcs.NEEDS_SETUP if s in enabled and (s not in was or not services_opt.get(s))
+            ]
             return await self._next_step()
-        enabled = [s for s in (services_opt.get("enabled") or []) if s in svcs.SERVICES]
         schema: dict[Any, Any] = {
-            vol.Optional("enabled", default=enabled): SelectSelector(
-                SelectSelectorConfig(options=svcs.SERVICES, multiple=True, translation_key="service", mode=SelectSelectorMode.LIST)
-            ),
-            vol.Required(CONF_CHANNEL_MODE, default=o.get(CONF_CHANNEL_MODE, DEFAULT_CHANNEL_MODE)): SelectSelector(
-                SelectSelectorConfig(options=CHANNEL_MODES, translation_key="channel_mode", mode=SelectSelectorMode.LIST)
-            ),
+            vol.Optional(s, default=s in was): BooleanSelector() for s in svcs.SERVICES
         }
+        schema[vol.Required(CONF_CHANNEL_MODE, default=o.get(CONF_CHANNEL_MODE, DEFAULT_CHANNEL_MODE))] = SelectSelector(
+            SelectSelectorConfig(options=CHANNEL_MODES, translation_key="channel_mode", mode=SelectSelectorMode.LIST)
+        )
         people = self._people_options()
         if people:
             schema[vol.Optional("person")] = SelectSelector(
@@ -154,11 +151,7 @@ class HouseCallOptionsFlow(OptionsFlow):
         return self.async_show_form(
             step_id="messaging",
             data_schema=vol.Schema(schema),
-            description_placeholders={
-                "help": svcs.HELP + "messaging-services",
-                # Also filled in for older cached wording, so the page never shows an error.
-                "found": "\n".join(f"- {label}" for label in messaging_routes(self.hass).values()) or "- none",
-            },
+            description_placeholders={"help": svcs.HELP + "messaging-services", "found": ""},
         )
 
     async def _next_step(self) -> ConfigFlowResult:
@@ -176,99 +169,6 @@ class HouseCallOptionsFlow(OptionsFlow):
         services = dict(self._new.get(CONF_SERVICES) or {})
         services[name] = cfg
         self._new[CONF_SERVICES] = services
-
-    # ---------------------------------------------- guided setup per service
-
-    async def async_step_setup_telegram(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        errors: dict[str, str] = {}
-        placeholders = {"help": svcs.HELP_LINKS[svcs.TELEGRAM], "error": ""}
-        if user_input is not None:
-            token = (user_input.get("token") or "").strip()
-            try:
-                bot = await svcs.Telegram(self.hass, token).check()
-            except svcs.SendError as err:
-                errors["base"] = "check_failed"
-                placeholders["error"] = str(err)
-            else:
-                self._set_svc_cfg(svcs.TELEGRAM, {"token": token, "bot": bot})
-                return await self._next_step()
-        return self.async_show_form(
-            step_id="setup_telegram",
-            data_schema=vol.Schema(
-                {vol.Required("token", description={"suggested_value": self._svc_cfg(svcs.TELEGRAM).get("token", "")}): TextSelector()}
-            ),
-            errors=errors,
-            description_placeholders=placeholders,
-        )
-
-    async def async_step_setup_ntfy(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        if user_input is not None:
-            server = (user_input.get("server") or "https://ntfy.sh").strip().rstrip("/")
-            self._set_svc_cfg(svcs.NTFY, {"server": server})
-            return await self._next_step()
-        return self.async_show_form(
-            step_id="setup_ntfy",
-            data_schema=vol.Schema(
-                {vol.Required("server", default=self._svc_cfg(svcs.NTFY).get("server", "https://ntfy.sh")): TextSelector()}
-            ),
-            description_placeholders={"help": svcs.HELP_LINKS[svcs.NTFY]},
-        )
-
-    async def async_step_setup_email(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        errors: dict[str, str] = {}
-        placeholders = {"help": svcs.HELP_LINKS[svcs.EMAIL], "error": ""}
-        cur = self._svc_cfg(svcs.EMAIL)
-        if user_input is not None:
-            provider = user_input.get("provider", "gmail")
-            host, port, security = svcs.EMAIL_PRESETS.get(provider, svcs.EMAIL_PRESETS["other"])
-            if provider == "other":
-                host = (user_input.get("host") or "").strip()
-                port = int(user_input.get("port") or 587)
-                security = user_input.get("security") or "starttls"
-            cfg = {
-                "provider": provider,
-                "host": host,
-                "port": port,
-                "security": security,
-                "username": (user_input.get("username") or "").strip(),
-                "password": user_input.get("password") or "",
-                "sender": (user_input.get("username") or "").strip(),
-            }
-            if not host:
-                errors["base"] = "check_failed"
-                placeholders["error"] = "Type your email provider's server name (or pick your provider)."
-            else:
-                try:
-                    await svcs.check_email(self.hass, cfg)
-                except svcs.SendError as err:
-                    errors["base"] = "check_failed"
-                    placeholders["error"] = str(err)
-                else:
-                    self._set_svc_cfg(svcs.EMAIL, cfg)
-                    return await self._next_step()
-        return self.async_show_form(
-            step_id="setup_email",
-            data_schema=vol.Schema(
-                {
-                    vol.Required("provider", default=cur.get("provider", "gmail")): SelectSelector(
-                        SelectSelectorConfig(options=list(svcs.EMAIL_PRESETS), translation_key="email_provider", mode=SelectSelectorMode.LIST)
-                    ),
-                    vol.Required("username", description={"suggested_value": cur.get("username", "")}): TextSelector(),
-                    vol.Required("password", description={"suggested_value": cur.get("password", "")}): TextSelector(
-                        TextSelectorConfig(type=TextSelectorType.PASSWORD)
-                    ),
-                    vol.Optional("host", description={"suggested_value": cur.get("host", "") if cur.get("provider") == "other" else ""}): TextSelector(),
-                    vol.Optional("port", default=int(cur.get("port", 587))): NumberSelector(
-                        NumberSelectorConfig(min=1, max=65535, step=1, mode=NumberSelectorMode.BOX)
-                    ),
-                    vol.Optional("security", default=cur.get("security", "starttls")): SelectSelector(
-                        SelectSelectorConfig(options=["starttls", "ssl", "none"], translation_key="email_security", mode=SelectSelectorMode.DROPDOWN)
-                    ),
-                }
-            ),
-            errors=errors,
-            description_placeholders=placeholders,
-        )
 
     async def async_step_setup_chat(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
@@ -292,127 +192,77 @@ class HouseCallOptionsFlow(OptionsFlow):
             description_placeholders=placeholders,
         )
 
-    # ------------------------------------------------- one person's services
+    async def async_step_setup_telegram(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        placeholders = {"help": svcs.HELP_LINKS[svcs.TELEGRAM], "error": ""}
+        if user_input is not None:
+            token = (user_input.get("token") or "").strip()
+            try:
+                bot = await svcs.Telegram(self.hass, token).check()
+            except svcs.SendError as err:
+                errors["base"] = "check_failed"
+                placeholders["error"] = str(err)
+            else:
+                self._set_svc_cfg(svcs.TELEGRAM, {"token": token, "bot": bot})
+                return await self._next_step()
+        return self.async_show_form(
+            step_id="setup_telegram",
+            data_schema=vol.Schema(
+                {vol.Required("token", description={"suggested_value": self._svc_cfg(svcs.TELEGRAM).get("token", "")}): TextSelector()}
+            ),
+            errors=errors,
+            description_placeholders=placeholders,
+        )
 
     async def async_step_messaging_person(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Link one person to their Telegram chat and/or the Discord channel."""
         pid = self._editing
         name = self._person_name(pid)
         enabled = [s for s in ((self._new.get(CONF_SERVICES) or {}).get("enabled") or []) if s in svcs.SERVICES]
         all_svc = dict(self.config_entry.options.get(CONF_PERSON_SERVICES) or {})
-        cur = dict(all_svc.get(pid) or {})
-        current_routes = ((self.config_entry.options.get(CONF_CHANNELS) or {}).get(pid) or {}).get("routes") or []
-        found = messaging_routes(self.hass)
+        cur = {k: v for k, v in (all_svc.get(pid) or {}).items() if k in svcs.SERVICES}  # drop removed services
         hub = self._hub()
-
         if user_input is not None:
-            new = dict(cur)
-            self._ntfy_topic = None
             if svcs.TELEGRAM in enabled:
-                chat = user_input.get("telegram") or ""
-                new["telegram"] = "" if chat == "none" else str(chat).strip()
-            if svcs.NTFY in enabled:
-                if user_input.get("ntfy"):
-                    new["ntfy"] = cur.get("ntfy") or svcs.new_ntfy_topic(name)
-                    self._ntfy_topic = new["ntfy"]
+                chat = str(user_input.get("telegram") or "").strip()
+                if chat and chat != "none":
+                    cur[svcs.TELEGRAM] = chat
                 else:
-                    new["ntfy"] = ""
-            if svcs.EMAIL in enabled:
-                new["email"] = (user_input.get("email") or "").strip()
-            for old_key in ("whatsapp_phone", "whatsapp_key", "messenger_key"):
-                new.pop(old_key, None)  # no longer supported
+                    cur.pop(svcs.TELEGRAM, None)
             if svcs.CHAT in enabled:
-                new["chat"] = bool(user_input.get("chat"))
-            new = {k: v for k, v in new.items() if v}
-            if new:
-                all_svc[pid] = new
+                if user_input.get("chat"):
+                    cur[svcs.CHAT] = True
+                else:
+                    cur.pop(svcs.CHAT, None)
+            if cur:
+                all_svc[pid] = cur
             else:
                 all_svc.pop(pid, None)
             self._new[CONF_PERSON_SERVICES] = all_svc
-            # "Other apps already in Home Assistant"
-            self._routes = list(user_input.get("routes") or [])
-            self._needs_address = [r for r in self._routes if self.hass.states.get(r) is None]
-            if self._needs_address:
-                return await self.async_step_messaging_addresses()
-            return await self._finish_person({})
-
+            return self._save(self._new)
         schema: dict[Any, Any] = {}
-        placeholders = {"name": name, "bot": "", "help": svcs.HELP + "messaging-services"}
+        bot = "@" + (self._svc_cfg(svcs.TELEGRAM).get("bot") or "your bot")
         if svcs.TELEGRAM in enabled:
             chats = dict(hub.tg_chats) if hub else {}
             options = [SelectOptionDict(value="none", label="Not on Telegram")]
             options += [SelectOptionDict(value=cid, label=f"{cname} ({cid})") for cid, cname in chats.items()]
-            if cur.get("telegram") and str(cur["telegram"]) not in chats:
-                options.append(SelectOptionDict(value=str(cur["telegram"]), label=str(cur["telegram"])))
-            schema[vol.Optional("telegram", default=str(cur.get("telegram") or "none"))] = SelectSelector(
+            if cur.get(svcs.TELEGRAM) and str(cur[svcs.TELEGRAM]) not in chats:
+                options.append(SelectOptionDict(value=str(cur[svcs.TELEGRAM]), label=str(cur[svcs.TELEGRAM])))
+            schema[vol.Optional("telegram", default=str(cur.get(svcs.TELEGRAM) or "none"))] = SelectSelector(
                 SelectSelectorConfig(options=options, custom_value=True, mode=SelectSelectorMode.DROPDOWN)
             )
-            placeholders["bot"] = "@" + ((self._new.get(CONF_SERVICES) or {}).get(svcs.TELEGRAM) or {}).get("bot", "your bot")
-        if svcs.NTFY in enabled:
-            schema[vol.Optional("ntfy", default=bool(cur.get("ntfy")))] = BooleanSelector()
-        if svcs.EMAIL in enabled:
-            schema[vol.Optional("email", description={"suggested_value": cur.get("email", "")})] = TextSelector()
         if svcs.CHAT in enabled:
-            schema[vol.Optional("chat", default=bool(cur.get("chat")))] = BooleanSelector()
-        if found or current_routes:
-            options = [SelectOptionDict(value=r, label=l) for r, l in found.items()]
-            options += [SelectOptionDict(value=r, label=f"{r} (not found)") for r in current_routes if r not in found]
-            schema[vol.Optional("routes", default=list(current_routes))] = SelectSelector(
-                SelectSelectorConfig(options=options, multiple=True, mode=SelectSelectorMode.LIST)
-            )
+            schema[vol.Optional("chat", default=bool(cur.get(svcs.CHAT)))] = BooleanSelector()
         if not schema:
-            return self.async_abort(reason="no_services")
-        return self.async_show_form(
-            step_id="messaging_person", data_schema=vol.Schema(schema), description_placeholders=placeholders
-        )
-
-    async def async_step_messaging_addresses(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        pid = self._editing
-        current = (self.config_entry.options.get(CONF_CHANNELS) or {}).get(pid) or {}
-        old = dict(current.get("addresses") or {})
-        if user_input is not None:
-            return await self._finish_person({r: (user_input.get(r) or "").strip() for r in self._needs_address})
-        schema = {
-            vol.Optional(r, description={"suggested_value": old.get(r) or current.get("address", "")}): TextSelector()
-            for r in self._needs_address
-        }
-        return self.async_show_form(
-            step_id="messaging_addresses",
-            data_schema=vol.Schema(schema),
-            description_placeholders={"name": self._person_name(pid)},
-        )
-
-    async def _finish_person(self, addresses: dict[str, str]) -> ConfigFlowResult:
-        pid = self._editing
-        channels = dict(self.config_entry.options.get(CONF_CHANNELS) or {})
-        addresses = {k: v for k, v in addresses.items() if v}
-        if self._routes:
-            channels[pid] = {"routes": self._routes, "addresses": addresses}
-        else:
-            channels.pop(pid, None)
-        self._new[CONF_CHANNELS] = channels
-        if getattr(self, "_ntfy_topic", None):
-            return await self.async_step_ntfy_info()
-        return self._save(self._new)
-
-    async def async_step_ntfy_info(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        if user_input is not None:
             return self._save(self._new)
-        server = ((self._new.get(CONF_SERVICES) or {}).get(svcs.NTFY) or {}).get("server", "https://ntfy.sh")
         return self.async_show_form(
-            step_id="ntfy_info",
-            data_schema=vol.Schema({}),
-            description_placeholders={
-                "name": self._person_name(self._editing),
-                "topic": self._ntfy_topic,
-                "server": server,
-                "link": f"{server}/{self._ntfy_topic}",
-            },
+            step_id="messaging_person",
+            data_schema=vol.Schema(schema),
+            description_placeholders={"name": name, "bot": bot, "help": svcs.HELP + "messaging-services"},
         )
 
     def _person_name(self, pid: str) -> str:
         return next((o["label"] for o in self._people_options() if o["value"] == pid), pid)
-
-    # ---------------------------------------------------- send a test message
 
     async def async_step_send_test(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         hub = self._hub()
