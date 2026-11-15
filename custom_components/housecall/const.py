@@ -1,13 +1,15 @@
 """Constants for HouseCall."""
 
 DOMAIN = "housecall"
-VERSION = "1.4.0"
+VERSION = "2.0.0"
 
 CONF_MEMBERS = "members"  # options-screen field only
 CONF_PEOPLE = "people"
 CONF_CUSTOM_PEOPLE = "custom_people"
 CONF_CHANNELS = "channels"  # {person_id: {"routes": ["notify.x", ...], "address": "+1555..."}}
 CONF_CHANNEL_MODE = "channel_mode"
+CONF_SERVICES = "services"  # {"enabled": [...], "telegram": {...}, "ntfy": {...}, "email": {...}, "chat": {...}}
+CONF_PERSON_SERVICES = "person_services"  # {person_id: {"telegram": chat_id, "ntfy": topic, ...}}
 CHANNEL_NEVER = "never"
 CHANNEL_NO_APP = "no_app"
 CHANNEL_CRITICAL = "critical"

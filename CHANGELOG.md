@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## [2.0.0] - 2026-11-14
+
+### Added
+
+- **Built-in messaging services, nothing else to install, all free:** Telegram, ntfy, email, WhatsApp and Facebook Messenger (through the free CallMeBot service), and a Discord or Slack family channel.
+- **Messaging services page:** tick the services you want. Anything not ticked is ignored.
+- **Guided setup for each service:** numbered steps, a help link, and a check that it works before saving (Telegram checks the bot token, email signs in, the channel gets a hello).
+- **Telegram:** people tap **Start** in your bot and HouseCall finds their chat for you. Alarms come with an **I'm on it** button right in Telegram. Tapping it works like the Home Assistant app's button, and the button is removed once someone answers.
+- **ntfy:** each person gets their own private topic, shown with step-by-step subscribe instructions.
+- **Each person's page only asks about the services you ticked.**
+- **Send a test message** covers the built-in services, with plain explanations when something fails.
+
+### Changed
+
+- Messaging integrations already in Home Assistant, such as Signal, are now under **Other apps already in Home Assistant (advanced)** on each person's page. Settings from 1.3 and 1.4 keep working.
+
 ## [1.4.0] - 2026-11-14
 
 ### Changed

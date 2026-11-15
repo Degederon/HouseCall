@@ -15,11 +15,14 @@ from homeassistant.helpers.event import async_call_later, async_track_time_inter
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util, slugify
 
+from . import services as svcs
 from .const import (
     ACK_PREFIX,
     CONF_BOARD_SERVICE,
     CONF_CHANNEL_MODE,
     CONF_CHANNELS,
+    CONF_PERSON_SERVICES,
+    CONF_SERVICES,
     CONF_CUSTOM_PEOPLE,
     CONF_GLASS_BOARD,
     CONF_MAX_REPEATS,
@@ -146,6 +149,8 @@ class HouseCall:
         self._store: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
         self._repeat_unsubs: dict[str, Any] = {}
         self._unsubs: list[Any] = []
+        self.telegram: svcs.Telegram | None = None
+        self.tg_chats: dict[str, str] = {}  # chats that sent /start to the bot: {chat_id: name}
 
     # ------------------------------------------------------------------ setup
 
@@ -156,6 +161,7 @@ class HouseCall:
     async def async_load(self) -> None:
         data = await self._store.async_load() or {}
         self.history = data.get("history", [])
+        self.tg_chats = {str(k): v for k, v in (data.get("tg_chats") or {}).items()}
         # Escalations don't survive a restart; mark old waiting items clearly.
         for item in self.history:
             if item.get("status") == STATUS_WAITING:
@@ -166,8 +172,15 @@ class HouseCall:
         self._unsubs.append(
             async_track_time_interval(self.hass, self._tick, timedelta(minutes=1))
         )
+        if self.service_enabled(svcs.TELEGRAM) and self.service_cfg(svcs.TELEGRAM).get("token"):
+            self.telegram = svcs.Telegram(self.hass, self.service_cfg(svcs.TELEGRAM)["token"])
+            self.telegram.on_ack = self._telegram_ack
+            self.telegram.on_chat = self._telegram_chat
+            self.telegram.start()
 
     async def async_stop(self) -> None:
+        if self.telegram:
+            await self.telegram.stop()
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
@@ -198,6 +211,7 @@ class HouseCall:
                     "home": bool(state and state.state == "home"),
                     "user_id": state.attributes.get("user_id") if state else None,
                     "custom": False,
+                    "svc": dict((self.opts.get(CONF_PERSON_SERVICES) or {}).get(pid) or {}),
                     **self._channels_for(pid),
                 }
             )
@@ -213,6 +227,7 @@ class HouseCall:
                     "home": (pstate.state in ("home", "on")) if pstate else None,
                     "user_id": None,
                     "custom": True,
+                    "svc": dict((self.opts.get(CONF_PERSON_SERVICES) or {}).get(cid) or {}),
                     **self._channels_for(cid),
                 }
             )
@@ -426,16 +441,100 @@ class HouseCall:
             data["target"] = targets
         return await self._try("notify", service, data)
 
+    # Built-in services -------------------------------------------------
+
+    def service_enabled(self, name: str) -> bool:
+        return name in ((self.opts.get(CONF_SERVICES) or {}).get("enabled") or [])
+
+    def service_cfg(self, name: str) -> dict[str, Any]:
+        return dict((self.opts.get(CONF_SERVICES) or {}).get(name) or {})
+
+    def person_builtins(self, person: dict[str, Any]) -> list[str]:
+        """The enabled built-in services this person can be reached on (the channel is shared)."""
+        svc = person.get("svc") or {}
+        out = []
+        if self.service_enabled(svcs.TELEGRAM) and svc.get("telegram"):
+            out.append(svcs.TELEGRAM)
+        if self.service_enabled(svcs.NTFY) and svc.get("ntfy"):
+            out.append(svcs.NTFY)
+        if self.service_enabled(svcs.EMAIL) and svc.get("email"):
+            out.append(svcs.EMAIL)
+        if self.service_enabled(svcs.WHATSAPP) and svc.get("whatsapp_phone") and svc.get("whatsapp_key"):
+            out.append(svcs.WHATSAPP)
+        if self.service_enabled(svcs.MESSENGER) and svc.get("messenger_key"):
+            out.append(svcs.MESSENGER)
+        if self.service_enabled(svcs.CHAT) and svc.get("chat"):
+            out.append(svcs.CHAT)
+        return out
+
+    async def _send_builtin(
+        self, name: str, person: dict[str, Any], text: str, priority: str, item: dict[str, Any] | None = None
+    ) -> str | None:
+        """Send through one built-in service. Returns None on success, or what went wrong."""
+        svc = person.get("svc") or {}
+        title = "HouseCall"
+        try:
+            if name == svcs.TELEGRAM:
+                if not self.telegram:
+                    return "Telegram isn't set up yet"
+                ack = item["id"] if item and priority == PRIORITY_CRITICAL and item.get("status") == STATUS_WAITING else None
+                msg_id = await self.telegram.send(svc["telegram"], text, ack)
+                if ack and msg_id:
+                    item.setdefault("tg", []).append([svc["telegram"], msg_id])
+            elif name == svcs.NTFY:
+                await svcs.send_ntfy(self.hass, self.service_cfg(svcs.NTFY).get("server", ""), svc["ntfy"], text, title, priority)
+            elif name == svcs.EMAIL:
+                to = [a.strip() for a in str(svc["email"]).split(",") if a.strip()]
+                subject = ("URGENT: " if priority == PRIORITY_CRITICAL else "") + "HouseCall"
+                await svcs.send_email(self.hass, self.service_cfg(svcs.EMAIL), to, subject, text)
+            elif name == svcs.WHATSAPP:
+                await svcs.send_whatsapp(self.hass, svc.get("whatsapp_phone", ""), svc.get("whatsapp_key", ""), text)
+            elif name == svcs.MESSENGER:
+                await svcs.send_messenger(self.hass, svc.get("messenger_key", ""), text)
+            elif name == svcs.CHAT:
+                await svcs.send_chat(self.hass, self.service_cfg(svcs.CHAT).get("webhook", ""), text)
+            else:
+                return f"Unknown service {name}"
+        except svcs.SendError as err:
+            _LOGGER.warning("HouseCall: %s to %s failed: %s", name, person.get("name"), err)
+            return str(err)
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.exception("HouseCall: %s failed", name)
+            return str(err) or err.__class__.__name__
+        return None
+
     async def _messaging(self, item: dict[str, Any], critical: bool) -> None:
         people = {p["id"]: p for p in self.people()}
         text = self._messaging_text(item, critical)
+        priority = PRIORITY_CRITICAL if critical else item.get("priority", PRIORITY_NORMAL)
+        chat_sent = False
         for pid in item["to"]:
             person = people.get(pid)
-            if not person or not person.get("routes") or not self._wants_messaging(person, critical):
+            if not person or not self._wants_messaging(person, critical):
                 continue
-            for route in person["routes"]:
+            for name in self.person_builtins(person):
+                if name == svcs.CHAT:
+                    if chat_sent:
+                        continue  # one post in the shared family channel is enough
+                    chat_sent = True
+                if await self._send_builtin(name, person, text, priority, item) is None:
+                    self._add_via(item, "messaging")
+            for route in person.get("routes") or []:
                 if await self._send_route(route, self.address_for(person, route), text) is None:
                     self._add_via(item, "messaging")
+
+    async def _telegram_chat(self, chat_id: int, name: str) -> None:
+        if self.tg_chats.get(str(chat_id)) != name:
+            self.tg_chats[str(chat_id)] = name
+            await self._save()
+
+    async def _telegram_ack(self, item_id: str, chat_id: int, who: str) -> None:
+        by = who or "someone"
+        for p in self.people():
+            if str((p.get("svc") or {}).get("telegram")) == str(chat_id):
+                by = p["name"]
+                break
+        await self.async_acknowledge(item_id, by)
 
     async def async_test(self, pid: str, how: str = TEST_ALL) -> list[dict[str, Any]]:
         """Send a test to one person and report every way it was tried."""
@@ -449,6 +548,11 @@ class HouseCall:
                 err = await self._try("notify", svc, {"message": text, "title": "HouseCall test"})
                 results.append({"channel": f"Phone app ({svc})", "ok": err is None, "error": err})
         if how in (TEST_ALL, TEST_MESSAGING):
+            names = {svcs.TELEGRAM: "Telegram", svcs.NTFY: "ntfy", svcs.EMAIL: "Email", svcs.WHATSAPP: "WhatsApp",
+                     svcs.MESSENGER: "Messenger", svcs.CHAT: "Family chat channel"}
+            for name in self.person_builtins(person):
+                err = await self._send_builtin(name, person, text, PRIORITY_NORMAL)
+                results.append({"channel": names[name], "ok": err is None, "error": err})
             labels = messaging_routes(self.hass)
             for route in person["routes"]:
                 err = await self._send_route(route, self.address_for(person, route), text)
@@ -565,6 +669,9 @@ class HouseCall:
         return True
 
     async def _after_ack(self, item: dict[str, Any], by: str | None) -> None:
+        if self.telegram:
+            for chat_id, msg_id in item.pop("tg", []):
+                await self.telegram.remove_button(chat_id, msg_id, f"Handled by {item.get('acked_by') or 'someone'}.")
         # Clear the alert from everyone's phone, then tell the others who has it.
         for svc in self._services_for(item["to"]):
             if svc.startswith("mobile_app_"):
@@ -577,7 +684,7 @@ class HouseCall:
             if others:
                 await self._push(
                     {**item, "to": others, "message": f"{item['acked_by']} is handling it: {item['message']}",
-                     "title": "Handled", "via": []},
+                     "title": "Handled", "via": [], "priority": PRIORITY_NORMAL, "status": STATUS_ACKED},
                     critical=False,
                 )
 
@@ -610,7 +717,7 @@ class HouseCall:
         return sum(1 for i in self.history if i.get("status") == STATUS_WAITING)
 
     async def _save(self) -> None:
-        await self._store.async_save({"history": self.history})
+        await self._store.async_save({"history": self.history, "tg_chats": self.tg_chats})
 
     async def _changed(self) -> None:
         await self._save()
