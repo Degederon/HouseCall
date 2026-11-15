@@ -8,7 +8,7 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.11%2B-18BCF2.svg?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
-[![Version](https://img.shields.io/badge/version-1.3.0-6E56CF.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.4.0-6E56CF.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
@@ -25,7 +25,7 @@ HouseCall makes notifications in Home Assistant simple. You send a message to **
 - [Step-by-step setup](#step-by-step-setup)
   - [Adding and removing people](#adding-and-removing-people)
   - [Starter dashboard](#part-6-start-from-the-sample-dashboard-optional)
-- [Messaging apps: Telegram, Signal, WhatsApp and more](#messaging-apps-telegram-signal-whatsapp-and-more)
+- [Messaging apps: Telegram, Signal, WhatsApp and more](#messaging-apps-telegram-signal-whatsapp-messenger-and-more)
 - [Send a test message](#send-a-test-message)
 - [Dashboard configuration](#dashboard-configuration)
 - [How urgency works](#how-urgency-works)
@@ -44,7 +44,7 @@ HouseCall makes notifications in Home Assistant simple. You send a message to **
 | **Three levels of urgency** | **Info** shows on the board only. **Normal** goes to phones and the board. **Critical** is loud, breaks through silent mode, and repeats until someone answers. |
 | **Quiet hours** | Normal messages wait until morning and still show on the board. Critical alerts always come through. |
 | **"I'm on it"** | One tap on a phone or the card stops the repeats, clears the alert from everyone's phone, and tells the others who's handling it. Tapping the notification itself opens your HouseCall dashboard, right next to the button. |
-| **Messaging apps** | Also reach people on Telegram, Signal, WhatsApp, ntfy, Pushover and more, through the messaging integrations you already have in Home Assistant. Great for family who don't use the Home Assistant app. |
+| **Messaging apps** | Also reach people on Telegram, Signal, WhatsApp, Facebook Messenger, Discord, Slack, email and more, through the messaging integrations you already have in Home Assistant. Great for family who don't use the Home Assistant app. |
 | **Send a test message** | Check every way you can reach someone in one go, and see exactly what worked. |
 | **Speakers** | Critical alerts are read aloud on the speakers you choose. |
 | **Glass Message Board** | Every message also appears as a note on your board, tinted by urgency (blue, amber, rose). Critical notes are pinned. The board doesn't send a second phone notification. |
@@ -135,7 +135,7 @@ To confirm it's working, open **Developer tools → States** and look for `senso
    |---|---|
    | **People from Home Assistant: show or hide** | Who appears in HouseCall, and their phone(s). See [Adding and removing people](#adding-and-removing-people). |
    | **Add / change a HouseCall-only person** | People who aren't in Home Assistant, such as Grandma or the babysitter. |
-   | **Messaging apps** | Telegram, Signal, WhatsApp and more. See [Messaging apps](#messaging-apps-telegram-signal-whatsapp-and-more). |
+   | **Messaging apps** | Telegram, Signal, WhatsApp and more. See [Messaging apps](#messaging-apps-telegram-signal-whatsapp-messenger-and-more). |
    | **Send a test message** | Check how someone can be reached. See [Send a test message](#send-a-test-message). |
    | **Quiet hours** | When Normal messages wait until morning. Default: 10 PM to 7 AM. |
    | **Phones, speakers, Glass Message Board and repeats** | Which dashboard opens when someone taps a notification, speakers and a voice for critical alerts, whether to post to Glass Message Board, how often critical alerts repeat (default every 5 minutes) and when to stop (default after 6 times). |
@@ -203,7 +203,7 @@ Want a ready-made page? The [starter dashboard](examples/starter-dashboard.yaml)
 
 Change the quick messages to suit your house: the words, who they go to (`to: person.jay`), and how urgent they are. If you also use Glass Message Board or Grand Marquee, the file shows where to add them.
 
-## Messaging apps: Telegram, Signal, WhatsApp and more
+## Messaging apps: Telegram, Signal, WhatsApp, Messenger and more
 
 HouseCall can also send through any messaging app you've connected to Home Assistant. It's ideal for family members who don't use the Home Assistant app. HouseCall doesn't connect to these apps itself: you add the app's own Home Assistant integration once, then tell HouseCall who it reaches.
 
@@ -216,7 +216,17 @@ HouseCall can also send through any messaging app you've connected to Home Assis
 | **WhatsApp** | Free for personal use | No official free option. The community **Whatsigram Messenger** integration (HACS) uses the free CallMeBot service. Each recipient becomes a notify entity. | WhatsApp, and to activate CallMeBot from their own phone once. |
 | **ntfy** | Free | **Settings → Devices & services → Add integration → ntfy**. Each topic becomes a notify entity. | The ntfy app, subscribed to the topic. |
 | **Pushover** | $4.99 once per platform | **Settings → Devices & services → Add integration → Pushover**. | The Pushover app. |
-| **Anything else** | Varies | Email, Discord, Slack, Matrix and many more: any integration that adds a notify action or notify entity works. | Depends on the app. |
+| **Facebook Messenger** | Free | The built-in **Facebook Messenger** integration (set up in `configuration.yaml`). It sends from a Facebook Page you own, so you need a Facebook Page and a Facebook developer app. Until Facebook approves the app, only people you add as testers of the app can receive messages. The community **Facebook Messenger** integration in HACS adds names and pictures. | Messenger, linked to the phone number you type in HouseCall. |
+| **Discord** | Free | The built-in **Discord** integration with a Discord bot. | To be in a server or channel the bot can post to. In HouseCall, type the channel ID. |
+| **Slack** | Free | The built-in **Slack** integration. | To be in the Slack workspace. In HouseCall, type the channel, such as `#family`. |
+| **Microsoft Teams, Google Chat, Mattermost, Mastodon and 100+ more** | Mostly free | The built-in **Apprise** integration (set up in `configuration.yaml`) reaches almost every notification service with one setup. | Depends on the service. |
+| **Matrix (Element)** | Free | The built-in **Matrix** integration. | A Matrix account. In HouseCall, type the room. |
+| **Threema** | Paid gateway | The built-in **Threema** integration. | Threema. In HouseCall, type their Threema ID. |
+| **Email** | Free | The built-in **Google Mail** integration, or **SMTP** for any email account. | An email address, typed in HouseCall. |
+| **Text messages (SMS)** | Paid service | The built-in **Twilio SMS**, **ClickSend** or **Sinch** integrations, or a phone modem with the **SMS notifications via GSM-modem** integration. See [Text messages](#text-messages-sms). | Their mobile number, typed in HouseCall. |
+| **Anything else** | Varies | Any integration that adds a notify action or notify entity works, including community integrations from HACS. | Depends on the app. |
+
+**Not possible:** Apple iMessage, Google Messages (RCS) and Instagram have no way for Home Assistant to send messages, so HouseCall can't use them.
 
 > [!NOTE]
 > Messaging apps are a good backup, but they can't sound an alarm on silent the way HouseCall's critical alerts do through the Home Assistant app (Pushover is the exception). Each app's integration belongs to its own developers; how reliable it is depends on that app.
@@ -234,9 +244,26 @@ HouseCall can also send through any messaging app you've connected to Home Assis
    | **Never** | Messaging apps are switched off. |
 
 3. Under **Set up messaging apps for**, pick a person and select **Submit**.
-4. Tick the apps that reach them. For apps that need it, such as Signal, type their number with the country code (for example `+15551234567`). Select **Submit**.
+4. Tick the apps that reach them and select **Submit**.
+5. If any of those apps need to know where to send, HouseCall asks for each one separately:
+   - **Signal, Facebook Messenger, text messages:** their number with the country code, such as `+15551234567`.
+   - **Email:** their email address.
+   - **Discord, Slack, Matrix:** the channel or room.
+   - **Threema:** their Threema ID.
+
+   Leave a box empty if that app already knows who to send to. To send to several, separate them with commas. Select **Submit**.
 
 Info messages never go to messaging apps, and repeats of a critical alert only ring the Home Assistant app, so nobody's chat gets flooded.
+
+### Text messages (SMS)
+
+The free email-to-text addresses of the big US carriers no longer work: AT&T's `@txt.att.net` shut down in June 2025, and T-Mobile's and Verizon's are gone or going. To send real text messages you need one of these, connected to Home Assistant:
+
+- **A paid SMS service:** Twilio SMS, ClickSend or Sinch (built in). In the US, business-style registration is required before texts are delivered reliably.
+- **A phone modem with a SIM card** plugged into your Home Assistant computer, with the **SMS notifications via GSM-modem** integration.
+- **An Android phone with a SIM card**, using a gateway app such as *SMS Gateway for Android* and a REST notify action in `configuration.yaml`.
+
+Then tick it in HouseCall like any other messaging app and type the person's mobile number. Text messages can't sound an alarm on silent, so use them as a backup.
 
 ## Send a test message
 
@@ -436,7 +463,7 @@ Your browser hasn't loaded the card's file.
 | I can't find **I'm on it** on my phone | The button is part of the notification, but it's hidden at first. On iPhone, **press and hold** the notification (or pull a banner down, or swipe it left and choose **View**). On Android, **swipe down** on the notification to expand it. A plain tap opens your HouseCall dashboard instead, where the button is on the card. |
 | Tapping a notification opens the wrong page | Choose the dashboard under **Configure → Phones, speakers, Glass Message Board and repeats → Dashboard to open when someone taps a notification**. If you named the starter dashboard **HouseCall**, it's picked automatically. |
 | A messaging app isn't listed in HouseCall | Add that app's own integration first (for example **Telegram bot**), then open **Configure → Messaging apps** again. For Telegram, also add the person's chat under **Telegram bot → ⋮ → Add allowed chat ID**. |
-| A test shows ❌ for a messaging app | The reason is shown next to it. Check the app's own integration: for Signal, that the REST API add-on is running and the number has the country code; for Telegram, that the person has sent **/start** to your bot. |
+| A test shows ❌ for a messaging app | The reason is shown next to it. Check the app's own integration: for Signal, that the REST API add-on is running and the number has the country code; for Telegram, that the person has sent **/start** to your bot; for Facebook Messenger, that they're a tester of your Facebook app (until it's approved) and the number matches their Messenger account. |
 | A critical alert says **Nobody answered** | It reached the number of repeats you set, or Home Assistant restarted while it was waiting. |
 | The card looks like the old version after an update | Restart Home Assistant, then hard-refresh the browser or reset the companion app's frontend cache. |
 

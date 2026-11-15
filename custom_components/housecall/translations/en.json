@@ -82,7 +82,7 @@
       },
       "messaging": {
         "title": "Messaging apps",
-        "description": "HouseCall can also send through any messaging app you've connected to Home Assistant, such as Telegram bot, Signal Messenger, ntfy, Pushover or Whatsigram (WhatsApp).\n\nFound in your Home Assistant:\n{found}\n\nChoose when to use them, and pick a person to set up their apps.",
+        "description": "HouseCall can also send through any messaging app you've connected to Home Assistant: Telegram bot, Signal Messenger, Facebook Messenger, WhatsApp (Whatsigram), Discord, Slack, Matrix, Threema, ntfy, Pushover, email, Apprise and more.\n\nFound in your Home Assistant:\n{found}\n\nChoose when to use them, and pick a person to set up their apps.",
         "data": {
           "channel_mode": "When to use messaging apps",
           "person": "Set up messaging apps for (optional)"
@@ -90,10 +90,9 @@
       },
       "messaging_person": {
         "title": "Messaging apps for {name}",
-        "description": "Tick the apps that reach {name}. A Telegram bot chat or WhatsApp recipient already knows who it is. For apps that need it, such as Signal, type their number with the country code (for example +15551234567).",
+        "description": "Tick the apps that reach {name}. Next, you'll be asked for their number or address in the apps that need one.",
         "data": {
-          "routes": "Send through",
-          "address": "Their number or chat ID (only if an app needs one)"
+          "routes": "Send through"
         }
       },
       "send_test": {
@@ -107,6 +106,10 @@
       "test_result": {
         "title": "Test results",
         "description": "{report}\n\nPress Submit to go back to the settings."
+      },
+      "messaging_addresses": {
+        "title": "Where to reach {name}",
+        "description": "For each app, type how it reaches {name}:\n- Signal, Facebook Messenger, SMS: their number with the country code, such as +15551234567\n- Email: their email address\n- Discord, Slack, Matrix: the channel or room\n- Threema: their Threema ID\n\nLeave a box empty if that app already knows who to send to. Separate several with commas."
       }
     },
     "error": {

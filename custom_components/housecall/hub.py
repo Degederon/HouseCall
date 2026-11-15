@@ -220,7 +220,15 @@ class HouseCall:
 
     def _channels_for(self, pid: str) -> dict[str, Any]:
         info = (self.opts.get(CONF_CHANNELS) or {}).get(pid) or {}
-        return {"routes": list(info.get("routes") or []), "address": (info.get("address") or "").strip()}
+        return {
+            "routes": list(info.get("routes") or []),
+            "address": (info.get("address") or "").strip(),  # older setting, used when an app has no address of its own
+            "addresses": {k: str(v).strip() for k, v in (info.get("addresses") or {}).items() if str(v).strip()},
+        }
+
+    @staticmethod
+    def address_for(person: dict[str, Any], route: str) -> str:
+        return (person.get("addresses") or {}).get(route) or person.get("address", "")
 
     def _name(self, pid: str) -> str:
         for p in self.people():
@@ -413,8 +421,9 @@ class HouseCall:
         if not self.hass.services.has_service("notify", service):
             return f"{route} doesn't exist (any more)"
         data: dict[str, Any] = {"message": text}
-        if address:
-            data["target"] = [address]
+        targets = [a.strip() for a in address.split(",") if a.strip()]
+        if targets:
+            data["target"] = targets
         return await self._try("notify", service, data)
 
     async def _messaging(self, item: dict[str, Any], critical: bool) -> None:
@@ -425,7 +434,7 @@ class HouseCall:
             if not person or not person.get("routes") or not self._wants_messaging(person, critical):
                 continue
             for route in person["routes"]:
-                if await self._send_route(route, person.get("address", ""), text) is None:
+                if await self._send_route(route, self.address_for(person, route), text) is None:
                     self._add_via(item, "messaging")
 
     async def async_test(self, pid: str, how: str = TEST_ALL) -> list[dict[str, Any]]:
@@ -442,7 +451,7 @@ class HouseCall:
         if how in (TEST_ALL, TEST_MESSAGING):
             labels = messaging_routes(self.hass)
             for route in person["routes"]:
-                err = await self._send_route(route, person.get("address", ""), text)
+                err = await self._send_route(route, self.address_for(person, route), text)
                 results.append({"channel": labels.get(route, route), "ok": err is None, "error": err})
         if not results:
             what = {TEST_APP: "no phone app", TEST_MESSAGING: "no messaging apps"}.get(how, "no phone app or messaging apps")

@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.4.0] - 2026-11-14
+
+### Added
+
+- **Each messaging app gets its own address for each person.** After ticking a person's apps, HouseCall asks where each one should send: a number for Signal, Facebook Messenger or text messages, an email address, a Discord, Slack or Matrix channel, or a Threema ID. Separate several with commas. Settings from 1.3.0 keep working.
+- Guide for Facebook Messenger, Discord, Slack, Microsoft Teams and 100+ more through Apprise, Matrix, Threema, email and text messages (SMS), plus which apps can't be used (iMessage, Google Messages, Instagram).
+
 ## [1.3.0] - 2026-11-14
 
 ### Added

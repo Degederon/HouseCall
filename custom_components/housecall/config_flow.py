@@ -147,22 +147,19 @@ class HouseCallOptionsFlow(OptionsFlow):
 
     async def async_step_messaging_person(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         pid = self._editing
-        channels = dict(self.config_entry.options.get(CONF_CHANNELS) or {})
-        current = channels.get(pid) or {}
-        if user_input is not None:
-            routes = list(user_input.get("routes") or [])
-            address = (user_input.get("address") or "").strip()
-            if routes or address:
-                channels[pid] = {"routes": routes, "address": address}
-            else:
-                channels.pop(pid, None)
-            return self._save({CONF_CHANNELS: channels, CONF_CHANNEL_MODE: getattr(self, "_pending_mode", DEFAULT_CHANNEL_MODE)})
+        current = (self.config_entry.options.get(CONF_CHANNELS) or {}).get(pid) or {}
         found = messaging_routes(self.hass)
+        if user_input is not None:
+            self._routes = list(user_input.get("routes") or [])
+            # Apps that are notify actions (Signal, Messenger, email...) may need an address.
+            self._needs_address = [r for r in self._routes if self.hass.states.get(r) is None]
+            if self._needs_address:
+                return await self.async_step_messaging_addresses()
+            return self._save_channels({})
         options = [SelectOptionDict(value=r, label=l) for r, l in found.items()]
         for r in current.get("routes") or []:
             if r not in found:
                 options.append(SelectOptionDict(value=r, label=f"{r} (not found)"))
-        name = next((o["label"] for o in self._people_options() if o["value"] == pid), pid)
         return self.async_show_form(
             step_id="messaging_person",
             data_schema=vol.Schema(
@@ -170,10 +167,40 @@ class HouseCallOptionsFlow(OptionsFlow):
                     vol.Optional("routes", default=list(current.get("routes") or [])): SelectSelector(
                         SelectSelectorConfig(options=options, multiple=True, mode=SelectSelectorMode.LIST)
                     ),
-                    vol.Optional("address", description={"suggested_value": current.get("address", "")}): TextSelector(),
                 }
             ),
-            description_placeholders={"name": name},
+            description_placeholders={"name": self._person_name(pid)},
+        )
+
+    async def async_step_messaging_addresses(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        pid = self._editing
+        current = (self.config_entry.options.get(CONF_CHANNELS) or {}).get(pid) or {}
+        old = dict(current.get("addresses") or {})
+        if user_input is not None:
+            return self._save_channels({r: (user_input.get(r) or "").strip() for r in self._needs_address})
+        schema = {
+            vol.Optional(r, description={"suggested_value": old.get(r) or current.get("address", "")}): TextSelector()
+            for r in self._needs_address
+        }
+        return self.async_show_form(
+            step_id="messaging_addresses",
+            data_schema=vol.Schema(schema),
+            description_placeholders={"name": self._person_name(pid)},
+        )
+
+    def _person_name(self, pid: str) -> str:
+        return next((o["label"] for o in self._people_options() if o["value"] == pid), pid)
+
+    def _save_channels(self, addresses: dict[str, str]) -> ConfigFlowResult:
+        pid = self._editing
+        channels = dict(self.config_entry.options.get(CONF_CHANNELS) or {})
+        addresses = {k: v for k, v in addresses.items() if v}
+        if self._routes:
+            channels[pid] = {"routes": self._routes, "addresses": addresses}
+        else:
+            channels.pop(pid, None)
+        return self._save(
+            {CONF_CHANNELS: channels, CONF_CHANNEL_MODE: getattr(self, "_pending_mode", DEFAULT_CHANNEL_MODE)}
         )
 
     # ---------------------------------------------------- send a test message
