@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [2.0.2] - 2026-11-14
+
+### Fixed
+
+- The **Messaging services** page no longer shows a `MISSING_VALUE` error if Home Assistant or the browser is still using the previous version's wording.
+
 ## [2.0.1] - 2026-11-14
 
 ### Fixed

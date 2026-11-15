@@ -154,7 +154,11 @@ class HouseCallOptionsFlow(OptionsFlow):
         return self.async_show_form(
             step_id="messaging",
             data_schema=vol.Schema(schema),
-            description_placeholders={"help": svcs.HELP + "messaging-services"},
+            description_placeholders={
+                "help": svcs.HELP + "messaging-services",
+                # Also filled in for older cached wording, so the page never shows an error.
+                "found": "\n".join(f"- {label}" for label in messaging_routes(self.hass).values()) or "- none",
+            },
         )
 
     async def _next_step(self) -> ConfigFlowResult:
